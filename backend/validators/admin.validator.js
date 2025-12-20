@@ -1,84 +1,97 @@
-const Joi = require('joi');
+const { z } = require('zod');
 
 /**
  * Validation schema for toggling user status
  */
-const toggleUserStatusSchema = Joi.object({
-    body: Joi.object({
-        isActive: Joi.boolean().required().messages({
-            'boolean.base': 'isActive must be a boolean value',
-            'any.required': 'isActive is required',
+const toggleUserStatusSchema = z.object({
+    body: z.object({
+        isActive: z.boolean({
+            required_error: 'isActive is required',
+            invalid_type_error: 'isActive must be a boolean value',
         }),
     }),
-    params: Joi.object({
-        id: Joi.string().uuid().required().messages({
-            'string.guid': 'Invalid user ID format',
-            'any.required': 'User ID is required',
-        }),
+    params: z.object({
+        id: z.string().uuid('Invalid user ID format'),
     }),
 });
 
 /**
  * Validation schema for changing user role
  */
-const changeUserRoleSchema = Joi.object({
-    body: Joi.object({
-        newRole: Joi.string()
-            .valid('CUSTOMER', 'ORGANISER', 'ADMIN')
-            .required()
-            .messages({
-                'any.only': 'newRole must be one of: CUSTOMER, ORGANISER, ADMIN',
-                'any.required': 'newRole is required',
-            }),
-    }),
-    params: Joi.object({
-        id: Joi.string().uuid().required().messages({
-            'string.guid': 'Invalid user ID format',
-            'any.required': 'User ID is required',
+const changeUserRoleSchema = z.object({
+    body: z.object({
+        newRole: z.enum(['CUSTOMER', 'ORGANISER', 'ADMIN'], {
+            errorMap: () => ({ message: 'newRole must be one of: CUSTOMER, ORGANISER, ADMIN' }),
         }),
+    }),
+    params: z.object({
+        id: z.string().uuid('Invalid user ID format'),
     }),
 });
 
 /**
  * Validation schema for getting users with filters
  */
-const getUsersQuerySchema = Joi.object({
-    query: Joi.object({
-        role: Joi.string().valid('CUSTOMER', 'ORGANISER', 'ADMIN').optional(),
-        isActive: Joi.boolean().optional(),
-        isVerified: Joi.boolean().optional(),
-        search: Joi.string().trim().optional(),
-        page: Joi.number().integer().min(1).default(1).optional(),
-        limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+const getUsersQuerySchema = z.object({
+    query: z.object({
+        role: z.enum(['CUSTOMER', 'ORGANISER', 'ADMIN']).optional(),
+        isActive: z
+            .string()
+            .transform((val) => val === 'true')
+            .pipe(z.boolean())
+            .optional(),
+        isVerified: z
+            .string()
+            .transform((val) => val === 'true')
+            .pipe(z.boolean())
+            .optional(),
+        search: z.string().trim().optional(),
+        page: z
+            .string()
+            .transform((val) => parseInt(val, 10))
+            .pipe(z.number().int().min(1))
+            .optional()
+            .default('1'),
+        limit: z
+            .string()
+            .transform((val) => parseInt(val, 10))
+            .pipe(z.number().int().min(1).max(100))
+            .optional()
+            .default('10'),
     }),
 });
 
 /**
  * Validation schema for getting appointments with filters
  */
-const getAppointmentsQuerySchema = Joi.object({
-    query: Joi.object({
-        status: Joi.string()
-            .valid('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED')
-            .optional(),
-        organizerId: Joi.string().uuid().optional(),
-        customerId: Joi.string().uuid().optional(),
-        startDate: Joi.date().iso().optional(),
-        endDate: Joi.date().iso().optional(),
-        page: Joi.number().integer().min(1).default(1).optional(),
-        limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+const getAppointmentsQuerySchema = z.object({
+    query: z.object({
+        status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']).optional(),
+        organizerId: z.string().uuid('Invalid organiser ID format').optional(),
+        customerId: z.string().uuid('Invalid customer ID format').optional(),
+        startDate: z.string().datetime().optional(),
+        endDate: z.string().datetime().optional(),
+        page: z
+            .string()
+            .transform((val) => parseInt(val, 10))
+            .pipe(z.number().int().min(1))
+            .optional()
+            .default('1'),
+        limit: z
+            .string()
+            .transform((val) => parseInt(val, 10))
+            .pipe(z.number().int().min(1).max(100))
+            .optional()
+            .default('10'),
     }),
 });
 
 /**
  * Validation schema for getting user by ID
  */
-const getUserByIdSchema = Joi.object({
-    params: Joi.object({
-        id: Joi.string().uuid().required().messages({
-            'string.guid': 'Invalid user ID format',
-            'any.required': 'User ID is required',
-        }),
+const getUserByIdSchema = z.object({
+    params: z.object({
+        id: z.string().uuid('Invalid user ID format'),
     }),
 });
 
