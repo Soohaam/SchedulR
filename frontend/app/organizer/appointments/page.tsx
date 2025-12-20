@@ -106,7 +106,7 @@ export default function AppointmentTypesPage() {
                     <Copy className="w-3 h-3 mr-2" />
                     Share
                   </Button>
-                  <Link href={`/organizer/appointments/${type.id}`}>
+                  <Link href={`/organizer/appointments/${type.id}/edit`}>
                     <Button variant="outline" size="sm" className="h-9">
                       <Edit className="w-3 h-3 mr-2" />
                       Edit
@@ -114,8 +114,7 @@ export default function AppointmentTypesPage() {
                   </Link>
                 </div>
 
-                {/* Right: Status Badge (Rotated as per wireframe idea, or just standard badge) */}
-                {/* Applying a "stamp" look for Published */}
+                {/* Right: Status Badge */}
                 {type.isPublished && (
                   <div className="absolute -top-3 -right-3 md:top-auto md:bottom-auto md:right-8 transform rotate-12 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border-2 border-green-600/20 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-sm shadow-sm pointer-events-none">
                     Published

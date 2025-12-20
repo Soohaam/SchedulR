@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import LoginForm from '../../components/auth/LoginForm';
 import TwoFactorForm from '../../components/auth/TwoFactorForm';
 import { Card } from '../../components/ui/Card';
@@ -10,7 +12,20 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { motion } from 'framer-motion';
 
 export default function LoginPage() {
-  const { requiresTwoFactor } = useSelector((state: RootState) => state.auth);
+  const router = useRouter();
+  const { requiresTwoFactor, isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (isAuthenticated && user && !requiresTwoFactor) {
+      const dashboardPath = user.role === 'ORGANISER'
+        ? '/organizer'
+        : user.role === 'ADMIN'
+          ? '/admin'
+          : '/user';
+      router.replace(dashboardPath);
+    }
+  }, [isAuthenticated, user, requiresTwoFactor, router]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300 relative overflow-hidden">
@@ -24,15 +39,15 @@ export default function LoginPage() {
       <div className="absolute top-4 right-4 z-50">
         <ThemeToggle />
       </div>
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="sm:mx-auto sm:w-full sm:max-w-md relative z-10"
       >
         <div className="flex justify-center mb-6">
-          <motion.div 
+          <motion.div
             whileHover={{ scale: 1.05, rotate: 5 }}
             className="w-14 h-14 bg-gradient-to-br from-accent to-accent/80 rounded-2xl flex items-center justify-center text-accent-foreground font-bold text-2xl shadow-xl shadow-accent/20"
           >
@@ -52,7 +67,7 @@ export default function LoginPage() {
         )}
       </motion.div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}

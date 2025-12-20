@@ -32,7 +32,7 @@ export default function MeetingsPage() {
                     search: searchTerm || undefined
                 }
             });
-            setBookings(response.data.data);
+            setBookings(response.data.data || []);
         } catch (error) {
             console.error('Failed to fetch requests:', error);
             toast.error('Failed to load pending requests');
@@ -111,7 +111,7 @@ export default function MeetingsPage() {
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                                     </td>
                                 </tr>
-                            ) : bookings.length > 0 ? (
+                            ) : bookings && bookings.length > 0 ? (
                                 bookings.map((booking) => (
                                     <tr key={booking.id} className="bg-card hover:bg-secondary/10 transition-colors">
                                         <td className="px-6 py-4 font-medium">{booking.appointmentType?.title || 'Appointment'}</td>

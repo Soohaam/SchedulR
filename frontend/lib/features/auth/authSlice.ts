@@ -16,6 +16,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  sessionExpiry: number | null; // Unix timestamp in milliseconds
   requiresTwoFactor: boolean;
   twoFactorToken: string | null;
   twoFactorSetup: { secret: string; otpauthUrl: string } | null;
@@ -29,6 +30,8 @@ const initialState: AuthState = {
   user: null,
   token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
   isAuthenticated: false,
+  sessionExpiry: typeof window !== 'undefined' ?
+    (localStorage.getItem('sessionExpiry') ? Number(localStorage.getItem('sessionExpiry')) : null) : null,
   requiresTwoFactor: false,
   twoFactorToken: null,
   twoFactorSetup: null,
@@ -44,14 +47,16 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async ({ role, ...userData }: any, { rejectWithValue }) => {
     try {
-      const endpoint = role === 'organiser' 
-        ? '/api/v1/auth/register/organiser' 
+      const endpoint = role === 'organiser'
+        ? '/api/v1/auth/register/organiser'
         : '/api/v1/auth/register/customer';
-        
+
       const response = await api.post(endpoint, userData);
       // If registration returns accessToken immediately (old behavior), store it
       if (response.data.accessToken) {
+        const sessionExpiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
         localStorage.setItem('token', response.data.accessToken);
+        localStorage.setItem('sessionExpiry', sessionExpiry.toString());
       }
       return response.data;
     } catch (error: any) {
@@ -65,7 +70,9 @@ export const verifyEmail = createAsyncThunk(
   async (data: { email: string; code: string }, { rejectWithValue }) => {
     try {
       const response = await api.post('/api/v1/auth/verify-email', data);
+      const sessionExpiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
       localStorage.setItem('token', response.data.accessToken);
+      localStorage.setItem('sessionExpiry', sessionExpiry.toString());
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Email verification failed');
@@ -79,7 +86,9 @@ export const loginUser = createAsyncThunk(
     try {
       const response = await api.post('/api/v1/auth/login', credentials);
       if (response.data.accessToken) {
+        const sessionExpiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
         localStorage.setItem('token', response.data.accessToken);
+        localStorage.setItem('sessionExpiry', sessionExpiry.toString());
       }
       return response.data;
     } catch (error: any) {
@@ -93,7 +102,9 @@ export const verifyTwoFactor = createAsyncThunk(
   async (data: { twoFactorToken: string; code: string }, { rejectWithValue }) => {
     try {
       const response = await api.post('/api/v1/auth/2fa/verify', data);
+      const sessionExpiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
       localStorage.setItem('token', response.data.accessToken);
+      localStorage.setItem('sessionExpiry', sessionExpiry.toString());
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Verification failed');
@@ -103,8 +114,15 @@ export const verifyTwoFactor = createAsyncThunk(
 
 export const fetchProfile = createAsyncThunk(
   'auth/fetchProfile',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
+      // Check if session is expired before making request
+      const state = getState() as { auth: AuthState };
+      if (state.auth.sessionExpiry && Date.now() > state.auth.sessionExpiry) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('sessionExpiry');
+        return rejectWithValue('Session expired');
+      }
       const response = await api.get('/api/v1/auth/me');
       return response.data;
     } catch (error: any) {
@@ -171,18 +189,70 @@ export const resetPassword = createAsyncThunk(
     }
   }
 );
+
+// Validate current session
+export const validateSession = createAsyncThunk(
+  'auth/validateSession',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const state = getState() as { auth: AuthState };
+
+      // Check if token exists
+      if (!state.auth.token) {
+        return rejectWithValue('No token found');
+      }
+
+      // Check if session is expired
+      if (state.auth.sessionExpiry && Date.now() > state.auth.sessionExpiry) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('sessionExpiry');
+        return rejectWithValue('Session expired');
+      }
+
+      // Validate with backend
+      const response = await api.get('/api/v1/auth/me');
+      return response.data;
+    } catch (error: any) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('sessionExpiry');
+      return rejectWithValue(error.response?.data?.message || 'Session validation failed');
+    }
+  }
+);
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
     logout: (state) => {
+      // Clear all localStorage items
       localStorage.removeItem('token');
+      localStorage.removeItem('sessionExpiry');
+
+      // Reset all state
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.sessionExpiry = null;
       state.requiresTwoFactor = false;
       state.twoFactorToken = null;
+      state.twoFactorSetup = null;
+      state.requiresEmailVerification = false;
+      state.emailToVerify = null;
       state.error = null;
+    },
+    sessionExpired: (state) => {
+      // Clear all localStorage items
+      localStorage.removeItem('token');
+      localStorage.removeItem('sessionExpiry');
+
+      // Reset all state
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.sessionExpiry = null;
+      state.requiresTwoFactor = false;
+      state.twoFactorToken = null;
+      state.error = 'Your session has expired. Please log in again.';
     },
     clearError: (state) => {
       state.error = null;
@@ -204,6 +274,7 @@ const authSlice = createSlice({
           state.isAuthenticated = true;
           state.user = action.payload.user;
           state.token = action.payload.accessToken;
+          state.sessionExpiry = Date.now() + (24 * 60 * 60 * 1000);
         }
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -220,6 +291,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.accessToken;
+        state.sessionExpiry = Date.now() + (24 * 60 * 60 * 1000);
         state.requiresEmailVerification = false;
         state.emailToVerify = null;
       })
@@ -241,6 +313,7 @@ const authSlice = createSlice({
           state.isAuthenticated = true;
           state.user = action.payload.user;
           state.token = action.payload.accessToken;
+          state.sessionExpiry = Date.now() + (24 * 60 * 60 * 1000);
           state.requiresTwoFactor = false;
           state.twoFactorToken = null;
         }
@@ -259,6 +332,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.accessToken;
+        state.sessionExpiry = Date.now() + (24 * 60 * 60 * 1000);
         state.requiresTwoFactor = false;
         state.twoFactorToken = null;
       })
@@ -281,7 +355,9 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
+        state.sessionExpiry = null;
         localStorage.removeItem('token');
+        localStorage.removeItem('sessionExpiry');
       })
       // Generate 2FA Setup
       .addCase(generateTwoFactorSetup.pending, (state) => {
@@ -322,9 +398,25 @@ const authSlice = createSlice({
       .addCase(disableTwoFactor.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // Validate Session
+      .addCase(validateSession.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(validateSession.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload;
+      })
+      .addCase(validateSession.rejected, (state) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+        state.sessionExpiry = null;
       });
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, sessionExpired, clearError } = authSlice.actions;
 export default authSlice.reducer;

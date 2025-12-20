@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/lib/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/lib/store';
+import { validateSession } from '@/lib/features/auth/authSlice';
+import { useSessionGuard } from '@/lib/hooks/useSessionGuard';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -17,16 +19,48 @@ export default function ProtectedRoute({
     redirectTo = '/login'
 }: ProtectedRouteProps) {
     const router = useRouter();
-    const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+    const dispatch = useDispatch<AppDispatch>();
+    const { isAuthenticated, user, token, sessionExpiry } = useSelector((state: RootState) => state.auth);
+    const [isValidating, setIsValidating] = useState(true);
+
+    // Use session guard to prevent back button access
+    useSessionGuard();
 
     useEffect(() => {
-        // Only redirect if we're sure the user is not authenticated
-        if (isAuthenticated === false) {
-            router.replace(redirectTo);
-            return;
-        }
+        const checkSession = async () => {
+            // If no token, redirect to login
+            if (!token) {
+                router.replace(redirectTo);
+                setIsValidating(false);
+                return;
+            }
 
-        // If authenticated but wrong role, redirect
+            // Check if session is expired
+            if (sessionExpiry && Date.now() > sessionExpiry) {
+                router.replace(redirectTo);
+                setIsValidating(false);
+                return;
+            }
+
+            // Validate session with backend if authenticated but no user data
+            if (token && !user) {
+                try {
+                    await dispatch(validateSession()).unwrap();
+                } catch (error) {
+                    router.replace(redirectTo);
+                    setIsValidating(false);
+                    return;
+                }
+            }
+
+            setIsValidating(false);
+        };
+
+        checkSession();
+    }, [token, sessionExpiry, user, dispatch, router, redirectTo]);
+
+    useEffect(() => {
+        // If authenticated but wrong role, redirect to correct dashboard
         if (isAuthenticated && user && !allowedRoles.includes(user.role)) {
             const correctPath = user.role === 'ORGANISER'
                 ? '/organizer'
@@ -36,10 +70,10 @@ export default function ProtectedRoute({
 
             router.replace(correctPath);
         }
-    }, [isAuthenticated, user, allowedRoles, redirectTo, router]);
+    }, [isAuthenticated, user, allowedRoles, router]);
 
-    // Show nothing while checking authentication
-    if (isAuthenticated === undefined || isAuthenticated === null) {
+    // Show loading while validating
+    if (isValidating || !isAuthenticated || !user) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent" />
@@ -47,13 +81,8 @@ export default function ProtectedRoute({
         );
     }
 
-    // Don't render if not authenticated
-    if (!isAuthenticated) {
-        return null;
-    }
-
     // Don't render if wrong role
-    if (user && !allowedRoles.includes(user.role)) {
+    if (!allowedRoles.includes(user.role)) {
         return null;
     }
 
