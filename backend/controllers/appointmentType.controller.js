@@ -269,6 +269,53 @@ const reorderQuestions = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Upload profile image for appointment type
+ * POST /api/organiser/appointment-types/:id/upload-image
+ */
+const uploadAppointmentImage = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can upload images', StatusCodes.FORBIDDEN);
+  }
+
+  if (!req.file) {
+    throw new AppError('No image file provided', StatusCodes.BAD_REQUEST);
+  }
+
+  const result = await appointmentTypeService.uploadAppointmentImage(
+    req.user.id,
+    req.params.id,
+    req.file.buffer
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    ...result,
+  });
+});
+
+/**
+ * Delete profile image for appointment type
+ * DELETE /api/organiser/appointment-types/:id/image
+ */
+const deleteAppointmentImage = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can delete images', StatusCodes.FORBIDDEN);
+  }
+
+  const result = await appointmentTypeService.deleteAppointmentImage(
+    req.user.id,
+    req.params.id
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    ...result,
+  });
+});
+
 module.exports = {
   createAppointmentType,
   listAppointmentTypes,
@@ -284,4 +331,6 @@ module.exports = {
   updateQuestion,
   deleteQuestion,
   reorderQuestions,
+  uploadAppointmentImage,
+  deleteAppointmentImage,
 };

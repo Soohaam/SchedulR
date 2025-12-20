@@ -2,6 +2,7 @@ const express = require('express');
 const appointmentTypeController = require('../controllers/appointmentType.controller');
 const validateRequest = require('../middlewares/validateRequest');
 const requireAuth = require('../middlewares/auth.middleware');
+const upload = require('../middleware/upload');
 const {
   createAppointmentTypeSchema,
   updateAppointmentTypeSchema,
@@ -42,6 +43,19 @@ router.patch(
   '/:id',
   validateRequest(updateAppointmentTypeSchema),
   appointmentTypeController.updateAppointmentType
+);
+
+// Upload profile image for appointment type
+router.post(
+  '/:id/upload-image',
+  upload.single('image'),
+  appointmentTypeController.uploadAppointmentImage
+);
+
+// Delete profile image for appointment type
+router.delete(
+  '/:id/image',
+  appointmentTypeController.deleteAppointmentImage
 );
 
 // Publish appointment type

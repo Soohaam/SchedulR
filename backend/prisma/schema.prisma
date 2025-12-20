@@ -289,6 +289,7 @@ model AppointmentType {
   meetingUrl         String?  // For virtual appointments
   color              String?  @default("#3B82F6")
   
+  profileImage       String?
   isPublished        Boolean  @default(false)
   shareLink          String?  @unique
   
