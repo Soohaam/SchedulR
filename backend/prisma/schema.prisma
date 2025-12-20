@@ -1,14 +1,193 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  // Keep this commented out if using prisma.config.ts (Prisma 7+)
+  // url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+
+enum UserRole {
+  CUSTOMER
+  ORGANISER
+  ADMIN
+}
+
+enum AppointmentResourceType {
+  USER
+  RESOURCE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  RAZORPAY
+}
+
+// --- MODELS ---
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String
+  fullName   String
+  role       UserRole @default(CUSTOMER)
+  isActive   Boolean  @default(true)
+  
+  // Verification Fields
+  isVerified Boolean  @default(false)
+  otpCode    String?
+  otpExpiry  DateTime?
+
+  // Email Verification Fields
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  
+  // Relations
+  createdServices     AppointmentType[]    @relation("OrganizerServices")
+  ownedResources      Resource[]           @relation("OrganizerResources")
+  bookings            Booking[]            @relation("CustomerBookings")
+  twoFactorSessions   TwoFactorSession[]
+  passwordResetTokens PasswordResetToken[] // NEW: Relation for forgot password
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// NEW: Password Reset Token Model
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  
+  token     String   @unique
+  expiresAt DateTime
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+model TwoFactorSession {
+  id        Int      @id @default(autoincrement())
+  
+  userId    String   
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tokenHash String   @unique
+  expiresAt DateTime
+}
+
+model Resource {
+  id            String   @id @default(uuid())
+  name          String
+  email         String?  
+  description   String?
+  isActive      Boolean  @default(true)
+  
+  organizerId   String
+  organizer     User     @relation("OrganizerResources", fields: [organizerId], references: [id])
+  
+  workingHours  Json     
+  bookings      Booking[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AppointmentType {
+  id                 String   @id @default(uuid())
+  title              String
+  description        String?
+  duration           Int      // in minutes
+  type               AppointmentResourceType 
+  
+  isPublished        Boolean  @default(false)
+  shareLink          String?  @unique
+  
+  maxBookingsPerSlot Int      @default(1)
+  manageCapacity     Boolean  @default(true)
+  
+  requiresPayment    Boolean  @default(false)
+  price              Decimal? @db.Decimal(10, 2) 
+  
+  manualConfirmation Boolean  @default(false)
+  autoAssignment     Boolean  @default(true)
+  
+  questions          Json?    
+  
+  organizerId        String
+  organizer          User     @relation("OrganizerServices", fields: [organizerId], references: [id])
+  
+  bookings           Booking[]
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Booking {
+  id                 String        @id @default(uuid())
+  
+  appointmentTypeId  String
+  appointmentType    AppointmentType @relation(fields: [appointmentTypeId], references: [id])
+  
+  customerId         String
+  customer           User          @relation("CustomerBookings", fields: [customerId], references: [id])
+  
+  resourceId         String?
+  resource           Resource?     @relation(fields: [resourceId], references: [id])
+  
+  date               DateTime
+  startTime          DateTime
+  endTime            DateTime
+  
+  status             BookingStatus @default(PENDING)
+  capacity           Int           @default(1) 
+  
+  answers            Json?         
+  confirmationMessage String?
+  
+  payment            Payment?
+  
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([appointmentTypeId, date, status]) 
+}
+
+model Payment {
+  id                    String          @id @default(uuid())
+  amount                Decimal         @db.Decimal(10, 2)
+  currency              String          @default("USD")
+  provider              PaymentProvider
+  
+  providerTransactionId String?         @unique 
+  
+  status                PaymentStatus   @default(PENDING)
+  metadata              Json?           
+  
+  bookingId             String          @unique
+  booking               Booking         @relation(fields: [bookingId], references: [id])
+  
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 }
