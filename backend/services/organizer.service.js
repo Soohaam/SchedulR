@@ -139,6 +139,7 @@ const getOrganizerBookings = async (organizerId, filters = {}) => {
       b."customerPhone",
       b."venue",
       b."notes",
+      b."answers",
       b."createdAt",
       b."confirmationMessage",
       c."fullName" as "customerName",
@@ -146,6 +147,7 @@ const getOrganizerBookings = async (organizerId, filters = {}) => {
       c."phone" as "customerPhoneFromUser",
       at."id" as "appointmentTypeId",
       at."title" as "appointmentTitle",
+      at."duration" as "appointmentDuration",
       sm."name" as "staffMemberName",
       r."name" as "resourceName",
       CASE 
@@ -170,35 +172,64 @@ const getOrganizerBookings = async (organizerId, filters = {}) => {
     const bookingsResult = await pool.query(bookingsQuery, queryParams);
 
     // Format bookings
-    const bookings = bookingsResult.rows.map((booking) => ({
-        id: booking.id,
-        customer: {
-            name: booking.customerName,
-            email: booking.customerEmailFromUser || booking.customerEmail,
-            phone: booking.customerPhoneFromUser || booking.customerPhone,
-        },
-        appointmentType: {
-            id: booking.appointmentTypeId,
-            title: booking.appointmentTitle,
-        },
-        provider: booking.staffMemberName || booking.resourceName
-            ? {
-                name: booking.staffMemberName || booking.resourceName,
-                type: booking.providerType,
+    const bookings = bookingsResult.rows.map((booking) => {
+        // Parse answers if it's a string
+        let parsedAnswers = null;
+        if (booking.answers) {
+            try {
+                parsedAnswers = typeof booking.answers === 'string' 
+                    ? JSON.parse(booking.answers) 
+                    : booking.answers;
+            } catch (e) {
+                console.error('Failed to parse answers:', e);
+                parsedAnswers = null;
             }
-            : null,
-        date: booking.date,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-        status: booking.status,
-        payment: booking.paymentAmount
-            ? {
-                status: booking.paymentStatus,
-                amount: parseFloat(booking.paymentAmount),
-            }
-            : null,
-        createdAt: booking.createdAt,
-    }));
+        }
+
+        return {
+            id: booking.id,
+            customer: {
+                fullName: booking.customerName,
+                name: booking.customerName,
+                email: booking.customerEmailFromUser || booking.customerEmail,
+                phone: booking.customerPhoneFromUser || booking.customerPhone,
+            },
+            customerEmail: booking.customerEmailFromUser || booking.customerEmail,
+            appointmentType: {
+                id: booking.appointmentTypeId,
+                title: booking.appointmentTitle,
+                duration: booking.appointmentDuration || 30,
+            },
+            staffMember: booking.staffMemberName && booking.providerType === 'STAFF'
+                ? {
+                    name: booking.staffMemberName,
+                }
+                : null,
+            resource: booking.resourceName && booking.providerType === 'RESOURCE'
+                ? {
+                    name: booking.resourceName,
+                }
+                : null,
+            provider: booking.staffMemberName || booking.resourceName
+                ? {
+                    name: booking.staffMemberName || booking.resourceName,
+                    type: booking.providerType,
+                }
+                : null,
+            date: booking.date,
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+            status: booking.status,
+            answers: parsedAnswers,
+            payment: booking.paymentAmount
+                ? {
+                    status: booking.paymentStatus,
+                    amount: parseFloat(booking.paymentAmount),
+                }
+                : null,
+            createdAt: booking.createdAt,
+        };
+    });
 
     return {
         bookings,

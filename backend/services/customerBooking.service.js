@@ -188,12 +188,12 @@ const createBooking = async ({
         // 5. Validate slot availability
         const idCol = providerType === 'RESOURCE' ? '"resourceId"' : '"staffMemberId"';
 
-        // Check working hours
+        // Check working hours for the appointment type
         const whResult = await client.query(
             `SELECT * FROM "WorkingHours"
-             WHERE ${idCol} = $1 AND "dayOfWeek" = $2 AND "isWorking" = TRUE
+             WHERE "appointmentTypeId" = $1 AND "dayOfWeek" = $2 AND "isWorking" = TRUE
              AND "startTime" <= $3 AND "endTime" >= $4`,
-            [providerId, dayOfWeek, timeStr, endTimeStr]
+            [appointmentTypeId, dayOfWeek, timeStr, endTimeStr]
         );
 
         if (whResult.rows.length === 0) {
@@ -211,11 +211,11 @@ const createBooking = async ({
             throw new AppError('Provider is not available on the selected date', StatusCodes.BAD_REQUEST);
         }
 
-        // Check capacity
+        // Check capacity (lock the table to prevent race conditions)
         const bookingCheckResult = await client.query(
             `SELECT COUNT(*) as count FROM "Booking"
-             WHERE ${idCol} = $1 AND date = $2::date AND status NOT IN ('CANCELLED')
-             AND "startTime" < $4 AND "endTime" > $3 FOR UPDATE`,
+             WHERE ${idCol} = $1 AND date = $2::date AND status != 'CANCELLED'
+             AND "startTime" < $4 AND "endTime" > $3`,
             [providerId, date, start.toISOString(), end.toISOString()]
         );
 

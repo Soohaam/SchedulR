@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Search, Filter, Check, X, Clock, Loader2 } from 'lucide-react';
+import { Search, Filter, Check, X, Clock, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
@@ -19,6 +19,7 @@ export default function MeetingsPage() {
     const [bookings, setBookings] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
     const { token } = useSelector((state: RootState) => state.auth);
 
     const fetchRequests = async () => {
@@ -32,7 +33,8 @@ export default function MeetingsPage() {
                     search: searchTerm || undefined
                 }
             });
-            setBookings(response.data.data || []);
+            console.log('Meetings API response:', response.data); // Debug log
+            setBookings(response.data.bookings || []);
         } catch (error) {
             console.error('Failed to fetch requests:', error);
             toast.error('Failed to load pending requests');
@@ -113,49 +115,77 @@ export default function MeetingsPage() {
                                 </tr>
                             ) : bookings && bookings.length > 0 ? (
                                 bookings.map((booking) => (
-                                    <tr key={booking.id} className="bg-card hover:bg-secondary/10 transition-colors">
-                                        <td className="px-6 py-4 font-medium">{booking.appointmentType?.title || 'Appointment'}</td>
-                                        <td className="px-6 py-4 text-muted-foreground">{booking.appointmentType?.type}</td>
-                                        <td className="px-6 py-4">{booking.customer?.fullName || booking.customerEmail}</td>
-                                        <td className="px-6 py-4">{booking.resource?.name || booking.staffMember?.name || '—'}</td>
-                                        <td className="px-6 py-4 flex flex-col">
-                                            <span>{new Date(booking.startTime).toLocaleDateString()}</span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                                                {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-muted-foreground truncate max-w-[150px]">
-                                            {/* Render answers if available */}
-                                            {booking.answers ? 'View Details' : '—'}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-                                                <Clock className="w-3 h-3 mr-1" />
-                                                Request
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="default"
-                                                    className="bg-green-600 hover:bg-green-700 h-8 px-3"
-                                                    onClick={() => handleAction(booking.id, 'confirm')}
-                                                >
-                                                    <Check className="w-4 h-4 mr-1" /> Approve
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="border-red-200 text-red-600 hover:bg-red-50 h-8 px-3"
-                                                    onClick={() => handleAction(booking.id, 'reject')}
-                                                >
-                                                    <X className="w-4 h-4 mr-1" /> Decline
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <>
+                                        <tr key={booking.id} className="bg-card hover:bg-secondary/10 transition-colors">
+                                            <td className="px-6 py-4 font-medium">{booking.appointmentType?.title || 'Appointment'}</td>
+                                            <td className="px-6 py-4 text-muted-foreground">{booking.appointmentType?.type}</td>
+                                            <td className="px-6 py-4">{booking.customer?.fullName || booking.customerEmail}</td>
+                                            <td className="px-6 py-4">{booking.resource?.name || booking.staffMember?.name || '—'}</td>
+                                            <td className="px-6 py-4 flex flex-col">
+                                                <span>{new Date(booking.startTime).toLocaleDateString()}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                                                    {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-muted-foreground">
+                                                {/* Render answers if available */}
+                                                {booking.answers && booking.answers.length > 0 ? (
+                                                    <button
+                                                        onClick={() => setExpandedBooking(expandedBooking === booking.id ? null : booking.id)}
+                                                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
+                                                    >
+                                                        {booking.answers.length} answer(s)
+                                                        {expandedBooking === booking.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                    </button>
+                                                ) : '—'}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+                                                    <Clock className="w-3 h-3 mr-1" />
+                                                    Request
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="default"
+                                                        className="bg-green-600 hover:bg-green-700 h-8 px-3"
+                                                        onClick={() => handleAction(booking.id, 'confirm')}
+                                                    >
+                                                        <Check className="w-4 h-4 mr-1" /> Approve
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="border-red-200 text-red-600 hover:bg-red-50 h-8 px-3"
+                                                        onClick={() => handleAction(booking.id, 'reject')}
+                                                    >
+                                                        <X className="w-4 h-4 mr-1" /> Decline
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {/* Expandable row for answers */}
+                                        {expandedBooking === booking.id && booking.answers && booking.answers.length > 0 && (
+                                            <tr className="bg-secondary/20">
+                                                <td colSpan={8} className="px-6 py-4">
+                                                    <div className="space-y-3">
+                                                        <h4 className="font-semibold text-sm">Customer Answers:</h4>
+                                                        {booking.answers.map((answer: any, idx: number) => (
+                                                            <div key={idx} className="bg-card p-3 rounded border border-border/50">
+                                                                <p className="text-sm font-medium text-muted-foreground mb-1">
+                                                                    {answer.questionText || `Question ${idx + 1}`}
+                                                                </p>
+                                                                <p className="text-sm">{answer.answer}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 ))
                             ) : (
                                 <tr>

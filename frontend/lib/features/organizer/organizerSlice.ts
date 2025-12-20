@@ -11,9 +11,8 @@ interface Booking {
     email: string;
   };
   appointmentType: {
-    name: string;
+    title: string;
     duration: number;
-    price: number;
   };
 }
 
@@ -65,12 +64,26 @@ const organizerSlice = createSlice({
       })
       .addCase(fetchOrganizerBookings.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.bookings = action.payload.bookings;
-        // Calculate stats from bookings for now (or fetch from backend if available)
-        state.stats.totalBookings = action.payload.meta.total;
-        state.stats.pendingBookings = action.payload.bookings.filter((b: Booking) => b.status === 'PENDING').length;
-        state.stats.confirmedBookings = action.payload.bookings.filter((b: Booking) => b.status === 'CONFIRMED').length;
-        // Revenue calculation would typically come from backend
+        // Backend returns { success, bookings, pagination, summary }
+        const data = action.payload;
+        state.bookings = data.bookings || [];
+        
+        // Use summary stats from backend if available
+        if (data.summary) {
+          state.stats.totalBookings = data.summary.totalBookings || 0;
+          state.stats.pendingBookings = data.summary.pendingConfirmation || 0;
+          state.stats.confirmedBookings = data.summary.confirmed || 0;
+        } else if (data.pagination) {
+          // Fallback to pagination total
+          state.stats.totalBookings = data.pagination.total || 0;
+          state.stats.pendingBookings = state.bookings.filter((b: Booking) => b.status === 'PENDING').length;
+          state.stats.confirmedBookings = state.bookings.filter((b: Booking) => b.status === 'CONFIRMED').length;
+        } else {
+          // Calculate from bookings array
+          state.stats.totalBookings = state.bookings.length;
+          state.stats.pendingBookings = state.bookings.filter((b: Booking) => b.status === 'PENDING').length;
+          state.stats.confirmedBookings = state.bookings.filter((b: Booking) => b.status === 'CONFIRMED').length;
+        }
       })
       .addCase(fetchOrganizerBookings.rejected, (state, action) => {
         state.isLoading = false;

@@ -14,6 +14,7 @@ export default function ReportingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [summary, setSummary] = useState<any>(null);
   const { token } = useSelector((state: RootState) => state.auth);
 
   const fetchBookings = async () => {
@@ -31,9 +32,16 @@ export default function ReportingPage() {
         }
       });
 
+      console.log('Reporting API response:', response.data); // Debug log
+      
+      // Backend returns { success, bookings, pagination, summary }
+      const allBookings = response.data.bookings || [];
+      const summaryData = response.data.summary;
+      
       // Filter out pending requests from reporting view if API returns them
-      const nonPending = response.data.data.filter((b: any) => b.status !== 'PENDING');
+      const nonPending = allBookings.filter((b: any) => b.status !== 'PENDING');
       setBookings(nonPending);
+      setSummary(summaryData);
     } catch (error) {
       console.error('Failed to fetch bookings:', error);
     } finally {
@@ -63,22 +71,24 @@ export default function ReportingPage() {
         </div>
       </div>
 
-      {/* Stats Overview - calculated from fetched data for now */}
+      {/* Stats Overview - use backend summary or calculate from bookings */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 border-border/50">
           <p className="text-sm text-muted-foreground">Total Bookings</p>
-          <h3 className="text-2xl font-bold">{bookings.length}</h3>
+          <h3 className="text-2xl font-bold">
+            {summary ? (summary.confirmed + summary.completed) : bookings.length}
+          </h3>
         </Card>
         <Card className="p-4 border-border/50">
           <p className="text-sm text-muted-foreground">Completed</p>
           <h3 className="text-2xl font-bold text-green-600">
-            {bookings.filter(b => b.status === 'COMPLETED').length}
+            {summary ? summary.completed : bookings.filter(b => b.status === 'COMPLETED').length}
           </h3>
         </Card>
         <Card className="p-4 border-border/50">
           <p className="text-sm text-muted-foreground">Confirmed/Upcoming</p>
           <h3 className="text-2xl font-bold text-blue-600">
-            {bookings.filter(b => b.status === 'CONFIRMED').length}
+            {summary ? summary.confirmed : bookings.filter(b => b.status === 'CONFIRMED').length}
           </h3>
         </Card>
       </div>

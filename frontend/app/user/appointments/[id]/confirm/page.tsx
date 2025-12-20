@@ -55,8 +55,8 @@ export default function ConfirmationPage() {
             const createdBookingId = response.data.booking.id;
             setBookingId(createdBookingId);
 
-            // If payment was made, confirm payment
-            if (bookingData.payment) {
+            // If payment was made and user is authenticated, confirm payment
+            if (bookingData.payment && user) {
                 await api.post(`/api/v1/customer/bookings/${createdBookingId}/confirm-payment`, {
                     paymentMethod: bookingData.payment.method,
                     amount: bookingData.payment.amount,

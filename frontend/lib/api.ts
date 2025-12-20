@@ -37,9 +37,15 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Don't trigger automatic logout for authentication endpoints
-    // These endpoints are expected to return 401 for invalid credentials
-    const authEndpoints = ['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/verify-email', '/api/v1/auth/2fa/verify'];
+    // Don't trigger automatic logout for authentication endpoints or booking creation
+    // These endpoints are expected to return 401 for invalid credentials or allow guest access
+    const authEndpoints = [
+      '/api/v1/auth/login', 
+      '/api/v1/auth/register', 
+      '/api/v1/auth/verify-email', 
+      '/api/v1/auth/2fa/verify',
+      '/api/v1/customer/bookings/create'
+    ];
     const isAuthEndpoint = authEndpoints.some(endpoint => originalRequest?.url?.includes(endpoint));
 
     // Handle 401 (Unauthorized) or 403 (Forbidden) errors for protected endpoints only

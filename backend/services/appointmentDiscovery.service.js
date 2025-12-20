@@ -348,25 +348,25 @@ const getAvailableProviders = async (appointmentId, date) => {
   const dayOfWeek = targetDate.getDay(); // 0-6
 
   const resultProviders = await Promise.all(providers.map(async (provider) => {
-    // a. Get Working Hours
+    // a. Get Working Hours from AppointmentType (not from individual staff/resource)
     const whQuery = `
       SELECT * FROM "WorkingHours"
-      WHERE ${isResourceParams ? '"resourceId"' : '"staffMemberId"'} = $1
+      WHERE "appointmentTypeId" = $1
       AND "dayOfWeek" = $2 AND "isWorking" = TRUE
     `;
-    const whResult = await pool.query(whQuery, [provider.id, dayOfWeek]);
+    const whResult = await pool.query(whQuery, [appointmentId, dayOfWeek]);
 
     if (whResult.rows.length === 0) {
       return { ...provider, availableSlots: [], totalAvailableSlots: 0 };
     }
 
-    // b. Check Exceptions
+    // b. Check Exceptions for the AppointmentType
     const exQuery = `
       SELECT * FROM "AvailabilityException"
-      WHERE ${isResourceParams ? '"resourceId"' : '"staffMemberId"'} = $1
+      WHERE "appointmentTypeId" = $1
       AND date = $2::date
     `;
-    const exResult = await pool.query(exQuery, [provider.id, date]);
+    const exResult = await pool.query(exQuery, [appointmentId, date]);
     let workHours = whResult.rows[0];
 
     // If exception says not available
@@ -392,7 +392,7 @@ const getAvailableProviders = async (appointmentId, date) => {
       FROM "Booking"
       WHERE ${isResourceParams ? '"resourceId"' : '"staffMemberId"'} = $1
       AND date = $2::date
-      AND status NOT IN ('CANCELLED', 'REFUND_PROCESSED')
+      AND status != 'CANCELLED'
     `;
     const bookingsResult = await pool.query(bookingsQuery, [provider.id, date]);
     const existingBookings = bookingsResult.rows.map(b => ({
@@ -447,17 +447,14 @@ const checkAvailability = async ({
   const start = new Date(startTime);
   const end = new Date(start.getTime() + duration * 60000);
 
-  // 2. Check Provider Working Hours (Simplified check for this specific slot)
+  // 2. Check AppointmentType Working Hours (not provider-specific working hours)
   const dayOfWeek = start.getDay();
   const timeStr = start.toTimeString().slice(0, 5); // HH:mm
 
-  // Determine ID column
-  const idCol = providerType === 'RESOURCE' ? '"resourceId"' : '"staffMemberId"';
-
-  // Check working hours
+  // Check working hours from AppointmentType
   const whQuery = `
     SELECT * FROM "WorkingHours"
-    WHERE ${idCol} = $1 AND "dayOfWeek" = $2 AND "isWorking" = TRUE
+    WHERE "appointmentTypeId" = $1 AND "dayOfWeek" = $2 AND "isWorking" = TRUE
     AND "startTime" <= $3 AND "endTime" >= $4
   `;
   // Note: Simple string comparison works for HH:mm usually, but crossing midnight needs care. 
@@ -465,20 +462,32 @@ const checkAvailability = async ({
   // We need to verify end time matches too.
   const endTimeStr = end.toTimeString().slice(0, 5);
 
-  const whResult = await pool.query(whQuery, [providerId, dayOfWeek, timeStr, endTimeStr]);
+  const whResult = await pool.query(whQuery, [appointmentId, dayOfWeek, timeStr, endTimeStr]);
 
-  // Also check exceptions... (Skipping deep exception logic for brevity, but should be here)
+  // Also check exceptions for AppointmentType
+  const exQuery = `
+    SELECT * FROM "AvailabilityException"
+    WHERE "appointmentTypeId" = $1 AND date = $2::date
+  `;
+  const exResult = await pool.query(exQuery, [appointmentId, date]);
+  
+  if (exResult.rows.length > 0 && !exResult.rows[0].isAvailable) {
+    return { success: true, available: false, reason: "Not available on this date" };
+  }
 
   if (whResult.rows.length === 0) {
     return { success: true, available: false, reason: "Outside working hours" };
   }
+
+  // Determine ID column for booking checks
+  const idCol = providerType === 'RESOURCE' ? '"resourceId"' : '"staffMemberId"';
 
   // 3. Check Bookings overlap
   const bookingQuery = `
     SELECT COUNT(*) as count 
     FROM "Booking"
     WHERE ${idCol} = $1
-    AND status NOT IN ('CANCELLED')
+    AND status != 'CANCELLED'
     AND "startTime" < $3 AND "endTime" > $2
   `;
   const bookingResult = await pool.query(bookingQuery, [providerId, start.toISOString(), end.toISOString()]);
