@@ -18,6 +18,7 @@ const bookingRoutes = require("./routes/booking.routes");
 const appointmentDiscoveryRoutes = require("./routes/appointmentDiscovery.routes");
 const adminRoutes = require("./routes/admin.routes");
 const appointmentTypeRoutes = require("./routes/appointmentType.routes");
+const organizerRoutes = require("./routes/organizer.routes");
 const { notFoundHandler, errorHandler } = require("./middlewares/errorHandler");
 const { connectDB } = require("./config/db");
 
@@ -46,6 +47,7 @@ app.use("/api/v1/organiser/resources", resourceRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/organiser/appointment-types", appointmentTypeRoutes);
+app.use("/api/v1/organiser", organizerRoutes);
 
 /* -------------------- ERRORS -------------------- */
 app.use(notFoundHandler);
