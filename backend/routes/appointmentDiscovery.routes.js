@@ -25,5 +25,12 @@ router.get('/share/:shareLink', appointmentDiscoveryController.getAppointmentByS
  */
 router.get('/:id/details', appointmentDiscoveryController.getAppointmentDetails);
 
+/**
+ * @route   GET /api/appointments/:id/slots
+ * @desc    Get available slots for an appointment type
+ * @access  Public
+ */
+router.get('/:id/slots', appointmentDiscoveryController.getAppointmentSlots);
+
 module.exports = router;
 

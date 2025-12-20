@@ -51,9 +51,44 @@ const getAppointmentByShareLink = asyncHandler(async (req, res) => {
   res.status(StatusCodes.OK).json(result);
 });
 
+/**
+ * Get available slots for an appointment type
+ */
+const getAppointmentSlots = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    // Default to current month if not specified? Or throw error.
+    // Better to throw error as date range is usually required for slots.
+    // For now, let's assume they are passed. 
+    // If not, we could default to today + 30 days.
+  }
+
+  // Simple validation
+  if (!startDate || !endDate) {
+    const today = new Date();
+    const end = new Date();
+    end.setDate(today.getDate() + 30); // Default 30 days
+
+    // Format YYYY-MM-DD
+    // Actually the service expects strings or Date objects. Postgres driver handles Dates.
+    var startD = today;
+    var endD = end;
+  } else {
+    var startD = startDate;
+    var endD = endDate;
+  }
+
+  const result = await appointmentDiscoveryService.getAppointmentSlots(id, startD, endD);
+
+  res.status(StatusCodes.OK).json(result);
+});
+
 module.exports = {
   getAvailableAppointments,
   getAppointmentDetails,
   getAppointmentByShareLink,
+  getAppointmentSlots,
 };
 

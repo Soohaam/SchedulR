@@ -14,6 +14,7 @@ const morgan = require("morgan");
 const authRoutes = require("./routes/auth.routes");
 const staffRoutes = require("./routes/staff.routes");
 const resourceRoutes = require("./routes/resource.routes");
+const bookingRoutes = require("./routes/booking.routes");
 const appointmentDiscoveryRoutes = require("./routes/appointmentDiscovery.routes");
 const { notFoundHandler, errorHandler } = require("./middlewares/errorHandler");
 const { connectDB } = require("./config/db");
@@ -40,6 +41,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/organiser/staff", staffRoutes);
 app.use("/api/appointments", appointmentDiscoveryRoutes);
 app.use("/api/v1/organiser/resources", resourceRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 /* -------------------- ERRORS -------------------- */
 app.use(notFoundHandler);

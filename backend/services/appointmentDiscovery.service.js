@@ -13,13 +13,13 @@ const calculateOrganizerRating = async (organizerId) => {
     INNER JOIN "AppointmentType" at ON b."appointmentTypeId" = at.id
     WHERE at."organizerId" = $1
   `;
-  
+
   const result = await pool.query(ratingQuery, [organizerId]);
-  const avgRating = result.rows[0]?.avg_rating 
-    ? parseFloat(result.rows[0].avg_rating) 
+  const avgRating = result.rows[0]?.avg_rating
+    ? parseFloat(result.rows[0].avg_rating)
     : null;
   const reviewCount = parseInt(result.rows[0]?.review_count || 0);
-  
+
   return { rating: avgRating, reviewCount };
 };
 
@@ -113,7 +113,7 @@ const getAvailableAppointments = async ({
     LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
   `;
   params.push(limit, offset);
-  
+
   const dataResult = await pool.query(dataQuery, params);
   const appointments = dataResult.rows;
 
@@ -121,7 +121,7 @@ const getAvailableAppointments = async ({
   const appointmentsWithRating = await Promise.all(
     appointments.map(async (appointment) => {
       const { rating, reviewCount } = await calculateOrganizerRating(appointment.organizerId);
-      
+
       return {
         id: appointment.id,
         title: appointment.title,
@@ -195,7 +195,7 @@ const getAppointmentDetails = async (appointmentId) => {
   `;
 
   const appointmentResult = await pool.query(appointmentQuery, [appointmentId]);
-  
+
   if (appointmentResult.rows.length === 0) {
     throw new AppError('Appointment type not found or not published', StatusCodes.NOT_FOUND);
   }
@@ -241,8 +241,8 @@ const getAppointmentDetails = async (appointmentId) => {
     allowCancellation: policyResult.rows[0].allowCancellation,
     cancellationDeadlineHours: policyResult.rows[0].cancellationDeadlineHours,
     refundPercentage: policyResult.rows[0].refundPercentage,
-    cancellationFee: policyResult.rows[0].cancellationFee 
-      ? parseFloat(policyResult.rows[0].cancellationFee) 
+    cancellationFee: policyResult.rows[0].cancellationFee
+      ? parseFloat(policyResult.rows[0].cancellationFee)
       : null,
     noShowPolicy: policyResult.rows[0].noShowPolicy,
   } : null;
@@ -323,7 +323,7 @@ const getAppointmentByShareLink = async (shareLink) => {
   `;
 
   const appointmentResult = await pool.query(appointmentQuery, [shareLink]);
-  
+
   if (appointmentResult.rows.length === 0) {
     throw new AppError('Appointment type not found', StatusCodes.NOT_FOUND);
   }
@@ -369,8 +369,8 @@ const getAppointmentByShareLink = async (shareLink) => {
     allowCancellation: policyResult.rows[0].allowCancellation,
     cancellationDeadlineHours: policyResult.rows[0].cancellationDeadlineHours,
     refundPercentage: policyResult.rows[0].refundPercentage,
-    cancellationFee: policyResult.rows[0].cancellationFee 
-      ? parseFloat(policyResult.rows[0].cancellationFee) 
+    cancellationFee: policyResult.rows[0].cancellationFee
+      ? parseFloat(policyResult.rows[0].cancellationFee)
       : null,
     noShowPolicy: policyResult.rows[0].noShowPolicy,
   } : null;
@@ -415,9 +415,54 @@ const getAppointmentByShareLink = async (shareLink) => {
   };
 };
 
+/**
+ * Get available slots for an appointment type
+ */
+const getAppointmentSlots = async (appointmentId, startDate, endDate) => {
+  const query = `
+    SELECT 
+      bs.id,
+      bs.date,
+      bs."startTime",
+      bs."endTime",
+      bs."bookedCapacity",
+      bs."maxCapacity",
+      bs."isAvailable",
+      bs."staffMemberId",
+      bs."resourceId",
+      sm."name" as "staffName",
+      r."name" as "resourceName"
+    FROM "BookingSlot" bs
+    LEFT JOIN "StaffMember" sm ON bs."staffMemberId" = sm.id
+    LEFT JOIN "Resource" r ON bs."resourceId" = r.id
+    WHERE bs."appointmentTypeId" = $1
+      AND bs.date >= $2
+      AND bs.date <= $3
+      AND bs."isAvailable" = TRUE
+      AND bs."bookedCapacity" < bs."maxCapacity"
+    ORDER BY bs."startTime" ASC
+  `;
+
+  const result = await pool.query(query, [appointmentId, startDate, endDate]);
+
+  return {
+    success: true,
+    slots: result.rows.map(slot => ({
+      id: slot.id,
+      date: slot.date,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      availableCapacity: slot.maxCapacity - slot.bookedCapacity,
+      staffName: slot.staffName,
+      resourceName: slot.resourceName
+    }))
+  };
+};
+
 module.exports = {
   getAvailableAppointments,
   getAppointmentDetails,
   getAppointmentByShareLink,
+  getAppointmentSlots,
 };
 
