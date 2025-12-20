@@ -424,6 +424,8 @@ const getAllAppointments = async (filters = {}) => {
         limit = 10,
     } = filters;
 
+    console.log('getAllAppointments filters:', filters);
+
     let whereConditions = [];
     let queryParams = [];
     let paramIndex = 1;
@@ -469,8 +471,11 @@ const getAllAppointments = async (filters = {}) => {
     JOIN "AppointmentType" at ON b."appointmentTypeId" = at."id"
     ${whereClause}
   `;
+    console.log('Count query:', countQuery);
+    console.log('Query params:', queryParams);
     const countResult = await pool.query(countQuery, queryParams);
     const totalAppointments = parseInt(countResult.rows[0].count);
+    console.log('Total appointments found:', totalAppointments);
 
     // Calculate pagination
     const offset = (page - 1) * limit;

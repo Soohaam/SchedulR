@@ -7,17 +7,22 @@ import { fetchProfile } from '@/lib/features/auth/authSlice';
 
 export default function AuthInitializer({ children }: { children: React.ReactNode }) {
     const dispatch = useDispatch<AppDispatch>();
-    const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
+    const { user } = useSelector((state: RootState) => state.auth);
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
         const initAuth = async () => {
+            // Check localStorage for token (persisted across refreshes)
+            const token = localStorage.getItem('token');
+            
             // If we have a token but no user data, fetch the profile
-            if (token && !isAuthenticated) {
+            if (token && !user) {
                 try {
                     await dispatch(fetchProfile()).unwrap();
                 } catch (error) {
                     console.error('Failed to restore session:', error);
+                    // Clear invalid token
+                    localStorage.removeItem('token');
                 }
             }
             setIsInitialized(true);

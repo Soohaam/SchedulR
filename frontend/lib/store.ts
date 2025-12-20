@@ -3,6 +3,7 @@ import authReducer from './features/auth/authSlice';
 import organizerReducer from './features/organizer/organizerSlice';
 import appointmentTypeReducer from './features/organizer/appointmentTypeSlice';
 import customerReducer from './features/customer/customerSlice';
+import adminReducer from './features/admin/adminSlice';
 
 export const makeStore = () => {
   return configureStore({
@@ -11,6 +12,7 @@ export const makeStore = () => {
       organizer: organizerReducer,
       appointmentType: appointmentTypeReducer,
       customer: customerReducer,
+      admin: adminReducer,
     },
   });
 };
