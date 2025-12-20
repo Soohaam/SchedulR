@@ -165,6 +165,110 @@ const getCancellationPolicy = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Add a question to appointment type
+ * POST /api/organiser/appointment-types/:id/questions
+ */
+const addQuestion = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can add questions', StatusCodes.FORBIDDEN);
+  }
+
+  const question = await appointmentTypeService.addQuestion(req.user.id, req.params.id, req.body);
+
+  res.status(StatusCodes.CREATED).json({
+    success: true,
+    question,
+  });
+});
+
+/**
+ * List all questions for appointment type
+ * GET /api/organiser/appointment-types/:id/questions
+ */
+const listQuestions = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can view questions', StatusCodes.FORBIDDEN);
+  }
+
+  const questions = await appointmentTypeService.listQuestions(req.user.id, req.params.id);
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    count: questions.length,
+    questions,
+  });
+});
+
+/**
+ * Update a question
+ * PATCH /api/organiser/appointment-types/:id/questions/:questionId
+ */
+const updateQuestion = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can update questions', StatusCodes.FORBIDDEN);
+  }
+
+  const question = await appointmentTypeService.updateQuestion(
+    req.user.id,
+    req.params.id,
+    req.params.questionId,
+    req.body
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    question,
+  });
+});
+
+/**
+ * Delete a question
+ * DELETE /api/organiser/appointment-types/:id/questions/:questionId
+ */
+const deleteQuestion = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can delete questions', StatusCodes.FORBIDDEN);
+  }
+
+  const result = await appointmentTypeService.deleteQuestion(
+    req.user.id,
+    req.params.id,
+    req.params.questionId
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    ...result,
+  });
+});
+
+/**
+ * Reorder questions
+ * POST /api/organiser/appointment-types/:id/questions/reorder
+ */
+const reorderQuestions = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can reorder questions', StatusCodes.FORBIDDEN);
+  }
+
+  const result = await appointmentTypeService.reorderQuestions(
+    req.user.id,
+    req.params.id,
+    req.body.questionIds
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    ...result,
+  });
+});
+
 module.exports = {
   createAppointmentType,
   listAppointmentTypes,
@@ -175,4 +279,9 @@ module.exports = {
   deleteAppointmentType,
   setCancellationPolicy,
   getCancellationPolicy,
+  addQuestion,
+  listQuestions,
+  updateQuestion,
+  deleteQuestion,
+  reorderQuestions,
 };

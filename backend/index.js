@@ -14,7 +14,7 @@ const morgan = require("morgan");
 const authRoutes = require("./routes/auth.routes");
 const staffRoutes = require("./routes/staff.routes");
 const resourceRoutes = require("./routes/resource.routes");
-const bookingRoutes = require("./routes/booking.routes");
+const customerBookingRoutes = require("./routes/customerBooking.routes");
 const appointmentDiscoveryRoutes = require("./routes/appointmentDiscovery.routes");
 const adminRoutes = require("./routes/admin.routes");
 const appointmentTypeRoutes = require("./routes/appointmentType.routes");
@@ -42,9 +42,9 @@ app.get("/health", async (req, res) => {
 /* -------------------- ROUTES -------------------- */
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/organiser/staff", staffRoutes);
-app.use("/api/appointments", appointmentDiscoveryRoutes);
+app.use("/api/v1/appointments", appointmentDiscoveryRoutes);
 app.use("/api/v1/organiser/resources", resourceRoutes);
-app.use("/api/bookings", bookingRoutes);
+app.use("/api/v1/customer/bookings", customerBookingRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/organiser/appointment-types", appointmentTypeRoutes);
 app.use("/api/v1/organiser", organizerRoutes);

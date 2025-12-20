@@ -137,6 +137,75 @@ const setCancellationPolicySchema = z.object({
   body: cancellationPolicySchema,
 });
 
+// Add single question schema
+const addQuestionSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid appointment type ID'),
+  }),
+  body: z.object({
+    questionText: z.string().trim().min(1, 'Question text is required').max(500),
+    questionType: questionTypeEnum,
+    options: z.array(z.string()).optional().nullable(),
+    isRequired: z.boolean().default(false),
+    order: z.number().int().min(0).default(0),
+  }).refine(
+    (data) => {
+      // For MULTIPLE_CHOICE, CHECKBOXES, and DROPDOWN, options are required
+      const requiresOptions = ['MULTIPLE_CHOICE', 'CHECKBOXES', 'DROPDOWN'].includes(data.questionType);
+      if (requiresOptions && (!data.options || data.options.length === 0)) {
+        return false;
+      }
+      // For other types, options should not be provided
+      if (!requiresOptions && data.options && data.options.length > 0) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Options are required for MULTIPLE_CHOICE, CHECKBOXES, and DROPDOWN types, and should not be provided for other types',
+    }
+  ),
+});
+
+// Update question schema
+const updateQuestionSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid appointment type ID'),
+    questionId: z.string().uuid('Invalid question ID'),
+  }),
+  body: z.object({
+    questionText: z.string().trim().min(1, 'Question text is required').max(500).optional(),
+    questionType: questionTypeEnum.optional(),
+    options: z.array(z.string()).optional().nullable(),
+    isRequired: z.boolean().optional(),
+    order: z.number().int().min(0).optional(),
+  }).refine(
+    (data) => {
+      // If questionType is provided and requires options, validate accordingly
+      if (data.questionType) {
+        const requiresOptions = ['MULTIPLE_CHOICE', 'CHECKBOXES', 'DROPDOWN'].includes(data.questionType);
+        if (requiresOptions && data.options !== undefined && (!data.options || data.options.length === 0)) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Options are required for MULTIPLE_CHOICE, CHECKBOXES, and DROPDOWN types when provided',
+    }
+  ),
+});
+
+// Reorder questions schema
+const reorderQuestionsSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid appointment type ID'),
+  }),
+  body: z.object({
+    questionIds: z.array(z.string().uuid('Invalid question ID')).min(1, 'At least one question ID is required'),
+  }),
+});
+
 module.exports = {
   createAppointmentTypeSchema,
   updateAppointmentTypeSchema,
@@ -144,4 +213,7 @@ module.exports = {
   addQuestionsSchema,
   updateCancellationPolicySchema,
   setCancellationPolicySchema,
+  addQuestionSchema,
+  updateQuestionSchema,
+  reorderQuestionsSchema,
 };

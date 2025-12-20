@@ -7,6 +7,9 @@ const {
   updateAppointmentTypeSchema,
   listAppointmentTypesSchema,
   setCancellationPolicySchema,
+  addQuestionSchema,
+  updateQuestionSchema,
+  reorderQuestionsSchema,
 } = require('../validators/appointmentType.validator');
 
 const router = express.Router();
@@ -70,6 +73,39 @@ router.post(
 router.get(
   '/:id/cancellation-policy',
   appointmentTypeController.getCancellationPolicy
+);
+
+// Add question to appointment type
+router.post(
+  '/:id/questions',
+  validateRequest(addQuestionSchema),
+  appointmentTypeController.addQuestion
+);
+
+// List all questions for appointment type
+router.get(
+  '/:id/questions',
+  appointmentTypeController.listQuestions
+);
+
+// Reorder questions (must be before /:questionId route)
+router.post(
+  '/:id/questions/reorder',
+  validateRequest(reorderQuestionsSchema),
+  appointmentTypeController.reorderQuestions
+);
+
+// Update a question
+router.patch(
+  '/:id/questions/:questionId',
+  validateRequest(updateQuestionSchema),
+  appointmentTypeController.updateQuestion
+);
+
+// Delete a question
+router.delete(
+  '/:id/questions/:questionId',
+  appointmentTypeController.deleteQuestion
 );
 
 module.exports = router;
