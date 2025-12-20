@@ -16,71 +16,21 @@ const OTP_WINDOW = 1;
 const hashToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
 
-const generateAccessToken = (userId) => signAccessToken({ sub: userId });
+const generateAccessToken = (userId, role) => 
+  signAccessToken({ 
+    sub: userId, 
+    userId: userId,
+    role: role 
+  });
 
 const generateRandomCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-const sanitizeOptionalString = (value) => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const createTwoFactorSession = async (userId) => {
-  await pool.query('DELETE FROM "TwoFactorSession" WHERE "userId" = $1', [userId]);
-
-  const token = crypto.randomBytes(32).toString('hex');
-  const tokenHash = hashToken(token);
-  const expiresAt = new Date(Date.now() + TWO_FACTOR_SESSION_TTL_MS);
-
-  await pool.query(
-    'INSERT INTO "TwoFactorSession" ("userId", "tokenHash", "expiresAt") VALUES ($1, $2, $3)',
-    [userId, tokenHash, expiresAt]
-  );
-
-  return token;
-};
-
-const validateTwoFactorSession = async (token) => {
-  const tokenHash = hashToken(token);
-
-  const result = await pool.query(
-    'SELECT * FROM "TwoFactorSession" WHERE "tokenHash" = $1',
-    [tokenHash]
-  );
-  const session = result.rows[0];
-
-  if (!session) {
-    throw new AppError(
-      'Invalid two-factor session',
-      StatusCodes.UNAUTHORIZED,
-    );
-  }
-
-  if (new Date(session.expiresAt).getTime() < Date.now()) {
-    await pool.query('DELETE FROM "TwoFactorSession" WHERE "id" = $1', [session.id]);
-    throw new AppError('Two-factor session expired', StatusCodes.UNAUTHORIZED);
-  }
-
-  return session;
-};
-
-const verifyOtpCode = (secret, code) =>
-  speakeasy.totp.verify({
-    secret,
-    encoding: 'base32',
-    token: code,
-    window: OTP_WINDOW,
-  });
-
-const getOtpIssuer = () => process.env.APP_NAME || 'Odoo Final API';
-
-const register = async ({ email, password, firstName, lastName }) => {
+/**
+ * Register a new customer user
+ */
+const registerCustomer = async ({ email, password, fullName }) => {
   const normalizedEmail = email.toLowerCase();
 
   const existingUserResult = await pool.query(
@@ -98,21 +48,74 @@ const register = async ({ email, password, firstName, lastName }) => {
   const verificationExpires = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000);
 
   const userRecordResult = await pool.query(
-    `INSERT INTO "User" ("email", "passwordHash", "firstName", "lastName", "isEmailVerified", "emailVerificationToken", "emailVerificationExpires", "createdAt", "updatedAt")
-     VALUES ($1, $2, $3, $4, FALSE, $5, $6, NOW(), NOW())
-     RETURNING *`,
-    [normalizedEmail, passwordHash, sanitizeOptionalString(firstName), sanitizeOptionalString(lastName), verificationCode, verificationExpires]
+    `INSERT INTO "User" (
+      "id", "email", "password", "fullName", "role", 
+      "isActive", "isVerified", "isEmailVerified", 
+      "emailVerificationToken", "emailVerificationExpires", 
+      "createdAt", "updatedAt"
+    )
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, TRUE, FALSE, FALSE, $5, $6, NOW(), NOW())
+    RETURNING *`,
+    [normalizedEmail, passwordHash, fullName.trim(), 'CUSTOMER', verificationCode, verificationExpires]
   );
   const userRecord = userRecordResult.rows[0];
 
   await sendEmail({
     to: normalizedEmail,
-    subject: 'Verify your email',
+    subject: 'Verify your email - Customer Registration',
     text: `Your verification code is: ${verificationCode}`,
-    html: `<p>Your verification code is: <strong>${verificationCode}</strong></p>`,
+    html: `<p>Thank you for registering as a Customer!</p><p>Your verification code is: <strong>${verificationCode}</strong></p><p>This code will expire in ${EMAIL_VERIFICATION_TTL_MINUTES} minutes.</p>`,
   });
 
   return {
+    message: 'Registration successful. Please verify your email.',
+    requiresEmailVerification: true,
+    email: normalizedEmail,
+  };
+};
+
+/**
+ * Register a new organiser user
+ */
+const registerOrganiser = async ({ email, password, fullName }) => {
+  const normalizedEmail = email.toLowerCase();
+
+  const existingUserResult = await pool.query(
+    'SELECT * FROM "User" WHERE "email" = $1',
+    [normalizedEmail]
+  );
+  const existingUser = existingUserResult.rows[0];
+
+  if (existingUser) {
+    throw new AppError('Email is already registered', StatusCodes.CONFLICT);
+  }
+
+  const passwordHash = await hashPassword(password);
+  const verificationCode = generateRandomCode();
+  const verificationExpires = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000);
+
+  const userRecordResult = await pool.query(
+    `INSERT INTO "User" (
+      "id", "email", "password", "fullName", "role", 
+      "isActive", "isVerified", "isEmailVerified", 
+      "emailVerificationToken", "emailVerificationExpires", 
+      "createdAt", "updatedAt"
+    )
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, TRUE, FALSE, FALSE, $5, $6, NOW(), NOW())
+    RETURNING *`,
+    [normalizedEmail, passwordHash, fullName.trim(), 'ORGANISER', verificationCode, verificationExpires]
+  );
+  const userRecord = userRecordResult.rows[0];
+
+  await sendEmail({
+    to: normalizedEmail,
+    subject: 'Verify your email - Organiser Registration',
+    text: `Your verification code is: ${verificationCode}`,
+    html: `<p>Thank you for registering as an Organiser!</p><p>Your verification code is: <strong>${verificationCode}</strong></p><p>This code will expire in ${EMAIL_VERIFICATION_TTL_MINUTES} minutes.</p>`,
+  });
+
+  return {
+    message: 'Registration successful. Please verify your email.',
     requiresEmailVerification: true,
     email: normalizedEmail,
   };
@@ -145,16 +148,19 @@ const verifyEmail = async ({ email, code }) => {
 
   const updatedUserResult = await pool.query(
     `UPDATE "User"
-     SET "isEmailVerified" = TRUE, "emailVerificationToken" = NULL, "emailVerificationExpires" = NULL, "updatedAt" = NOW()
+     SET "isEmailVerified" = TRUE, "isVerified" = TRUE, 
+         "emailVerificationToken" = NULL, "emailVerificationExpires" = NULL, 
+         "updatedAt" = NOW()
      WHERE "id" = $1
      RETURNING *`,
     [user.id]
   );
   const updatedUser = updatedUserResult.rows[0];
 
-  const accessToken = generateAccessToken(updatedUser.id);
+  const accessToken = generateAccessToken(updatedUser.id, updatedUser.role);
 
   return {
+    message: 'Email verified successfully',
     user: toPublicUser(updatedUser),
     accessToken,
   };
@@ -173,7 +179,15 @@ const login = async ({ email, password }) => {
     throw new AppError('Invalid credentials', StatusCodes.UNAUTHORIZED);
   }
 
-  const isPasswordValid = await comparePassword(password, user.passwordHash);
+  // Check if user account is active
+  if (!user.isActive) {
+    throw new AppError(
+      'Your account has been deactivated. Please contact support.',
+      StatusCodes.FORBIDDEN
+    );
+  }
+
+  const isPasswordValid = await comparePassword(password, user.password);
 
   if (!isPasswordValid) {
     throw new AppError('Invalid credentials', StatusCodes.UNAUTHORIZED);
@@ -183,22 +197,12 @@ const login = async ({ email, password }) => {
     throw new AppError('Email not verified. Please verify your email first.', StatusCodes.FORBIDDEN);
   }
 
-  if (user.isTwoFactorEnabled && user.twoFactorSecret) {
-    const twoFactorToken = await createTwoFactorSession(user.id);
-
-    return {
-      requiresTwoFactor: true,
-      twoFactorToken,
-      expiresIn: Math.floor(TWO_FACTOR_SESSION_TTL_MS / 1000),
-    };
-  }
-
-  const accessToken = generateAccessToken(user.id);
+  const accessToken = generateAccessToken(user.id, user.role);
 
   return {
+    message: 'Login successful',
     user: toPublicUser(user),
     accessToken,
-    requiresTwoFactor: false,
   };
 };
 
@@ -347,13 +351,24 @@ const getProfile = async (userId) => {
   return toPublicUser(user);
 };
 
+/**
+ * Logout user
+ * Note: Since we're using stateless JWT, logout is handled on the client side
+ * by removing the token. This function can be used for logging purposes.
+ */
+const logout = async (userId) => {
+  // For stateless JWT, logout is client-side
+  // This endpoint can be used for audit logging if needed
+  return {
+    message: 'Logout successful',
+  };
+};
+
 module.exports = {
-  register,
-  login,
-  verifyTwoFactorLogin,
+  registerCustomer,
+  registerOrganiser,
   verifyEmail,
-  generateTwoFactorSetup,
-  enableTwoFactor,
-  disableTwoFactor,
+  login,
+  logout,
   getProfile,
 };

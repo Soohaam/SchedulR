@@ -3,21 +3,41 @@ const authController = require('../controllers/auth.controller');
 const validateRequest = require('../middlewares/validateRequest');
 const requireAuth = require('../middlewares/auth.middleware');
 const {
-  registerSchema,
+  registerCustomerSchema,
+  registerOrganiserSchema,
   loginSchema,
-  twoFactorVerifySchema,
-  twoFactorCodeSchema,
+  emailVerificationSchema,
 } = require('../validators/auth.validator');
 
 const router = express.Router();
 
-router.post('/register', validateRequest(registerSchema), authController.register);
-router.post('/verify-email', authController.verifyEmail);
+// Registration routes
+router.post(
+  '/register/customer',
+  validateRequest(registerCustomerSchema),
+  authController.registerCustomer
+);
+
+router.post(
+  '/register/organiser',
+  validateRequest(registerOrganiserSchema),
+  authController.registerOrganiser
+);
+
+// Email verification
+router.post(
+  '/verify-email',
+  validateRequest(emailVerificationSchema),
+  authController.verifyEmail
+);
+
+// Login route (unified for all roles)
 router.post('/login', validateRequest(loginSchema), authController.login);
-router.post('/2fa/verify', validateRequest(twoFactorVerifySchema), authController.verifyTwoFactorLogin);
-router.post('/2fa/setup', requireAuth, authController.generateTwoFactorSetup);
-router.post('/2fa/enable', requireAuth, validateRequest(twoFactorCodeSchema), authController.enableTwoFactor);
-router.post('/2fa/disable', requireAuth, validateRequest(twoFactorCodeSchema), authController.disableTwoFactor);
+
+// Logout route (protected)
+router.post('/logout', requireAuth, authController.logout);
+
+// Profile route
 router.get('/me', requireAuth, authController.getProfile);
 
 module.exports = router;

@@ -15,12 +15,27 @@ const passwordSchema = z
   .regex(/[a-z]/, 'Password must include at least one lowercase letter')
   .regex(/[0-9]/, 'Password must include at least one number');
 
-const registerSchema = z.object({
+const fullNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Full name is required')
+  .max(100, 'Full name must be at most 100 characters long');
+
+// Customer registration schema
+const registerCustomerSchema = z.object({
   body: z.object({
     email: emailSchema,
     password: passwordSchema,
-    firstName: z.string().trim().max(50).optional(),
-    lastName: z.string().trim().max(50).optional(),
+    fullName: fullNameSchema,
+  }),
+});
+
+// Organiser registration schema
+const registerOrganiserSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+    password: passwordSchema,
+    fullName: fullNameSchema,
   }),
 });
 
@@ -48,9 +63,20 @@ const twoFactorCodeSchema = z.object({
   }),
 });
 
+const emailVerificationSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+    code: z
+      .string()
+      .regex(/^\d{6}$/, 'Code must be a 6 digit number'),
+  }),
+});
+
 module.exports = {
-  registerSchema,
+  registerCustomerSchema,
+  registerOrganiserSchema,
   loginSchema,
   twoFactorVerifySchema,
   twoFactorCodeSchema,
+  emailVerificationSchema,
 };

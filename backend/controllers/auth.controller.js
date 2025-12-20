@@ -2,8 +2,14 @@ const { StatusCodes } = require('http-status-codes');
 const asyncHandler = require('../utils/asyncHandler');
 const authService = require('../services/auth.service');
 
-const register = asyncHandler(async (req, res) => {
-  const result = await authService.register(req.body);
+const registerCustomer = asyncHandler(async (req, res) => {
+  const result = await authService.registerCustomer(req.body);
+
+  res.status(StatusCodes.CREATED).json(result);
+});
+
+const registerOrganiser = asyncHandler(async (req, res) => {
+  const result = await authService.registerOrganiser(req.body);
 
   res.status(StatusCodes.CREATED).json(result);
 });
@@ -20,46 +26,23 @@ const login = asyncHandler(async (req, res) => {
   res.status(StatusCodes.OK).json(result);
 });
 
-const verifyTwoFactorLogin = asyncHandler(async (req, res) => {
-  const { user, accessToken } = await authService.verifyTwoFactorLogin(req.body);
-
-  res.status(StatusCodes.OK).json({
-    user,
-    accessToken,
-  });
-});
-
-const generateTwoFactorSetup = asyncHandler(async (req, res) => {
-  const setup = await authService.generateTwoFactorSetup(req.user.id);
-
-  res.status(StatusCodes.OK).json(setup);
-});
-
-const enableTwoFactor = asyncHandler(async (req, res) => {
-  const user = await authService.enableTwoFactor(req.user.id, req.body.code);
-
-  res.status(StatusCodes.OK).json({ user });
-});
-
-const disableTwoFactor = asyncHandler(async (req, res) => {
-  const user = await authService.disableTwoFactor(req.user.id, req.body.code);
-
-  res.status(StatusCodes.OK).json({ user });
-});
-
 const getProfile = asyncHandler(async (req, res) => {
   const user = await authService.getProfile(req.user.id);
 
   res.status(StatusCodes.OK).json({ user });
 });
 
+const logout = asyncHandler(async (req, res) => {
+  const result = await authService.logout(req.user.id);
+
+  res.status(StatusCodes.OK).json(result);
+});
+
 module.exports = {
-  register,
-  login,
-  verifyTwoFactorLogin,
-  generateTwoFactorSetup,
-  enableTwoFactor,
-  disableTwoFactor,
-  getProfile,
+  registerCustomer,
+  registerOrganiser,
   verifyEmail,
+  login,
+  logout,
+  getProfile,
 };
