@@ -567,6 +567,225 @@ const getCancellationPolicy = async (organizerId, appointmentTypeId) => {
   return policyResult.rows[0];
 };
 
+/**
+ * Add a question to an appointment type
+ */
+const addQuestion = async (organizerId, appointmentTypeId, questionData) => {
+  const { questionText, questionType, options, isRequired, order } = questionData;
+
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Create the question
+  const questionResult = await pool.query(
+    `INSERT INTO "Question" 
+      ("questionText", "questionType", "options", "isRequired", "order", "appointmentTypeId", "createdAt", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+     RETURNING *`,
+    [questionText, questionType, options ? JSON.stringify(options) : null, isRequired, order, appointmentTypeId]
+  );
+
+  const question = questionResult.rows[0];
+  
+  // Parse options JSON if exists
+  if (question.options) {
+    question.options = JSON.parse(question.options);
+  }
+
+  return question;
+};
+
+/**
+ * List all questions for an appointment type
+ */
+const listQuestions = async (organizerId, appointmentTypeId) => {
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Fetch all questions ordered by order field
+  const questionsResult = await pool.query(
+    'SELECT * FROM "Question" WHERE "appointmentTypeId" = $1 ORDER BY "order" ASC, "createdAt" ASC',
+    [appointmentTypeId]
+  );
+
+  // Parse options JSON for each question
+  const questions = questionsResult.rows.map(question => {
+    if (question.options) {
+      question.options = JSON.parse(question.options);
+    }
+    return question;
+  });
+
+  return questions;
+};
+
+/**
+ * Update a question
+ */
+const updateQuestion = async (organizerId, appointmentTypeId, questionId, updateData) => {
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Verify question exists and belongs to this appointment type
+  const questionResult = await pool.query(
+    'SELECT * FROM "Question" WHERE "id" = $1 AND "appointmentTypeId" = $2',
+    [questionId, appointmentTypeId]
+  );
+
+  if (questionResult.rows.length === 0) {
+    throw new AppError('Question not found', StatusCodes.NOT_FOUND);
+  }
+
+  // Build dynamic update query
+  const updates = [];
+  const values = [];
+  let paramCount = 1;
+
+  if (updateData.questionText !== undefined) {
+    updates.push(`"questionText" = $${paramCount}`);
+    values.push(updateData.questionText);
+    paramCount++;
+  }
+
+  if (updateData.questionType !== undefined) {
+    updates.push(`"questionType" = $${paramCount}`);
+    values.push(updateData.questionType);
+    paramCount++;
+  }
+
+  if (updateData.options !== undefined) {
+    updates.push(`"options" = $${paramCount}`);
+    values.push(updateData.options ? JSON.stringify(updateData.options) : null);
+    paramCount++;
+  }
+
+  if (updateData.isRequired !== undefined) {
+    updates.push(`"isRequired" = $${paramCount}`);
+    values.push(updateData.isRequired);
+    paramCount++;
+  }
+
+  if (updateData.order !== undefined) {
+    updates.push(`"order" = $${paramCount}`);
+    values.push(updateData.order);
+    paramCount++;
+  }
+
+  if (updates.length === 0) {
+    throw new AppError('No fields to update', StatusCodes.BAD_REQUEST);
+  }
+
+  updates.push(`"updatedAt" = NOW()`);
+  values.push(questionId);
+
+  const updateQuery = `
+    UPDATE "Question"
+    SET ${updates.join(', ')}
+    WHERE "id" = $${paramCount}
+    RETURNING *
+  `;
+
+  const updatedQuestionResult = await pool.query(updateQuery, values);
+  const updatedQuestion = updatedQuestionResult.rows[0];
+
+  // Parse options JSON if exists
+  if (updatedQuestion.options) {
+    updatedQuestion.options = JSON.parse(updatedQuestion.options);
+  }
+
+  return updatedQuestion;
+};
+
+/**
+ * Delete a question
+ */
+const deleteQuestion = async (organizerId, appointmentTypeId, questionId) => {
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Verify question exists and belongs to this appointment type
+  const questionResult = await pool.query(
+    'SELECT * FROM "Question" WHERE "id" = $1 AND "appointmentTypeId" = $2',
+    [questionId, appointmentTypeId]
+  );
+
+  if (questionResult.rows.length === 0) {
+    throw new AppError('Question not found', StatusCodes.NOT_FOUND);
+  }
+
+  // Delete the question
+  await pool.query('DELETE FROM "Question" WHERE "id" = $1', [questionId]);
+
+  return {
+    message: 'Question deleted successfully',
+  };
+};
+
+/**
+ * Reorder questions
+ */
+const reorderQuestions = async (organizerId, appointmentTypeId, questionIds) => {
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Verify all questions exist and belong to this appointment type
+  const questionsResult = await pool.query(
+    'SELECT "id" FROM "Question" WHERE "id" = ANY($1) AND "appointmentTypeId" = $2',
+    [questionIds, appointmentTypeId]
+  );
+
+  if (questionsResult.rows.length !== questionIds.length) {
+    throw new AppError('One or more questions not found or do not belong to this appointment type', StatusCodes.BAD_REQUEST);
+  }
+
+  // Update the order for each question
+  for (let i = 0; i < questionIds.length; i++) {
+    await pool.query(
+      'UPDATE "Question" SET "order" = $1, "updatedAt" = NOW() WHERE "id" = $2',
+      [i, questionIds[i]]
+    );
+  }
+
+  return {
+    message: 'Questions reordered successfully',
+  };
+};
+
 module.exports = {
   createAppointmentType,
   listAppointmentTypes,
@@ -577,4 +796,9 @@ module.exports = {
   deleteAppointmentType,
   setCancellationPolicy,
   getCancellationPolicy,
+  addQuestion,
+  listQuestions,
+  updateQuestion,
+  deleteQuestion,
+  reorderQuestions,
 };
