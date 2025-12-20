@@ -8,25 +8,47 @@ const bookingService = require('../services/booking.service');
 const createBooking = asyncHandler(async (req, res) => {
     const {
         appointmentTypeId,
-        slotId,
-        customerDetails,
+        providerId,
+        providerType,
+        date,
+        startTime,
+        capacity,
         answers,
-        timezone
+        notes,
+        customerDetails
     } = req.body;
 
-    // Use authenticated user if available
     const customerId = req.user ? req.user.id : null;
 
     const result = await bookingService.createBooking({
         appointmentTypeId,
-        slotId,
-        customerDetails,
-        customerId,
+        providerId,
+        providerType,
+        date,
+        startTime,
+        capacity,
         answers,
-        timezone
+        notes,
+        customerDetails,
+        customerId
     });
 
     res.status(StatusCodes.CREATED).json(result);
+});
+
+/**
+ * Confirm Payment
+ */
+const confirmPayment = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { paymentIntentId, transactionId } = req.body;
+    const userId = req.user ? req.user.id : null;
+    // Note: For now assuming auth middleware populates req.user. 
+    // If no auth middleware is active in main index.js for this route, userId might be null.
+    // The service handles checks.
+
+    const result = await bookingService.confirmPayment(id, paymentIntentId, transactionId, userId);
+    res.status(StatusCodes.OK).json(result);
 });
 
 /**
@@ -43,5 +65,6 @@ const getBookingDetails = asyncHandler(async (req, res) => {
 
 module.exports = {
     createBooking,
+    confirmPayment,
     getBookingDetails
 };

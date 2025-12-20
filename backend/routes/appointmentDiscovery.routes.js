@@ -3,34 +3,19 @@ const appointmentDiscoveryController = require('../controllers/appointmentDiscov
 
 const router = express.Router();
 
-/**
- * @route   GET /api/appointments/available
- * @desc    Get all published appointment types with filters
- * @access  Public
- */
+// GET /api/appointments/available
 router.get('/available', appointmentDiscoveryController.getAvailableAppointments);
 
-/**
- * @route   GET /api/appointments/share/:shareLink
- * @desc    Get appointment type by share link (even if unpublished)
- * @access  Public
- * @note    Must be before /:id/details to avoid route conflicts
- */
+// GET /api/appointments/share/:shareLink
 router.get('/share/:shareLink', appointmentDiscoveryController.getAppointmentByShareLink);
 
-/**
- * @route   GET /api/appointments/:id/details
- * @desc    Get appointment type full details by ID
- * @access  Public
- */
+// GET /api/appointments/:id/details
 router.get('/:id/details', appointmentDiscoveryController.getAppointmentDetails);
 
-/**
- * @route   GET /api/appointments/:id/slots
- * @desc    Get available slots for an appointment type
- * @access  Public
- */
-router.get('/:id/slots', appointmentDiscoveryController.getAppointmentSlots);
+// GET /api/appointments/:id/available-providers
+router.get('/:id/available-providers', appointmentDiscoveryController.getAvailableProviders);
+
+// POST /api/appointments/:id/check-availability
+router.post('/:id/check-availability', appointmentDiscoveryController.checkAvailability);
 
 module.exports = router;
-

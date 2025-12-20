@@ -34,53 +34,45 @@ const getAvailableAppointments = asyncHandler(async (req, res) => {
  */
 const getAppointmentDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
   const result = await appointmentDiscoveryService.getAppointmentDetails(id);
-
   res.status(StatusCodes.OK).json(result);
 });
 
 /**
- * Get appointment type by share link (even if unpublished)
+ * Get appointment type by share link
  */
 const getAppointmentByShareLink = asyncHandler(async (req, res) => {
   const { shareLink } = req.params;
-
   const result = await appointmentDiscoveryService.getAppointmentByShareLink(shareLink);
-
   res.status(StatusCodes.OK).json(result);
 });
 
 /**
- * Get available slots for an appointment type
+ * Get available providers for appointment
  */
-const getAppointmentSlots = asyncHandler(async (req, res) => {
+const getAvailableProviders = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { startDate, endDate } = req.query;
+  const { date } = req.query; // YYYY-MM-DD
 
-  if (!startDate || !endDate) {
-    // Default to current month if not specified? Or throw error.
-    // Better to throw error as date range is usually required for slots.
-    // For now, let's assume they are passed. 
-    // If not, we could default to today + 30 days.
-  }
+  const result = await appointmentDiscoveryService.getAvailableProviders(id, date);
+  res.status(StatusCodes.OK).json(result);
+});
 
-  // Simple validation
-  if (!startDate || !endDate) {
-    const today = new Date();
-    const end = new Date();
-    end.setDate(today.getDate() + 30); // Default 30 days
+/**
+ * Check slot availability
+ */
+const checkAvailability = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { providerId, providerType, date, startTime, capacity } = req.body;
 
-    // Format YYYY-MM-DD
-    // Actually the service expects strings or Date objects. Postgres driver handles Dates.
-    var startD = today;
-    var endD = end;
-  } else {
-    var startD = startDate;
-    var endD = endDate;
-  }
-
-  const result = await appointmentDiscoveryService.getAppointmentSlots(id, startD, endD);
+  const result = await appointmentDiscoveryService.checkAvailability({
+    appointmentId: id,
+    providerId,
+    providerType,
+    date,
+    startTime,
+    capacity
+  });
 
   res.status(StatusCodes.OK).json(result);
 });
@@ -89,6 +81,6 @@ module.exports = {
   getAvailableAppointments,
   getAppointmentDetails,
   getAppointmentByShareLink,
-  getAppointmentSlots,
+  getAvailableProviders,
+  checkAvailability
 };
-
