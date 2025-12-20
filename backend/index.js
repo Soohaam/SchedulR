@@ -12,6 +12,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 
 const authRoutes = require("./routes/auth.routes");
+const staffRoutes = require("./routes/staff.routes");
 const { notFoundHandler, errorHandler } = require("./middlewares/errorHandler");
 const { connectDB } = require("./config/db");
 
@@ -34,6 +35,7 @@ app.get("/health", async (req, res) => {
 
 /* -------------------- ROUTES -------------------- */
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/organiser/staff", staffRoutes);
 
 /* -------------------- ERRORS -------------------- */
 app.use(notFoundHandler);
