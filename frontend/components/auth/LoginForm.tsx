@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -84,6 +85,12 @@ export default function LoginForm() {
             {...register('password')}
             className="bg-background"
           />
+          
+          <div className="flex justify-end">
+            <Link href="/forgot-password" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
+              Forgot password?
+            </Link>
+          </div>
         </div>
 
         <Button

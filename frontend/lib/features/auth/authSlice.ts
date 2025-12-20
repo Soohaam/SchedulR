@@ -147,7 +147,29 @@ export const disableTwoFactor = createAsyncThunk(
     }
   }
 );
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/api/v1/auth/forgot-password', { email });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to send reset email');
+    }
+  }
+);
 
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async (data: { token: string; password: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/api/v1/auth/reset-password', data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Password reset failed');
+    }
+  }
+);
 const authSlice = createSlice({
   name: 'auth',
   initialState,

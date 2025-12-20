@@ -401,8 +401,8 @@ const forgotPassword = async ({ email }) => {
 
   // Store the reset token in the database
   await pool.query(
-    `INSERT INTO "PasswordResetToken" ("token", "expiresAt", "userId", "createdAt")
-     VALUES ($1, $2, $3, NOW())`,
+    `INSERT INTO "PasswordResetToken" ("id", "token", "expiresAt", "userId", "createdAt")
+     VALUES (gen_random_uuid(), $1, $2, $3, NOW())`,
     [resetToken, expiresAt, user.id]
   );
 
