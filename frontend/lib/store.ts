@@ -1,10 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './features/auth/authSlice';
+import organizerReducer from './features/organizer/organizerSlice';
+import appointmentTypeReducer from './features/organizer/appointmentTypeSlice';
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       auth: authReducer,
+      organizer: organizerReducer,
+      appointmentType: appointmentTypeReducer,
     },
   });
 };

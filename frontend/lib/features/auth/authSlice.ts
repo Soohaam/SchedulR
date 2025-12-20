@@ -6,6 +6,7 @@ interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  role: string;
   isTwoFactorEnabled: boolean;
   createdAt: string;
   updatedAt: string;

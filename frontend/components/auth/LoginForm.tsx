@@ -23,7 +23,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginForm() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { isLoading, error, isAuthenticated, requiresTwoFactor } = useSelector(
+  const { isLoading, error, isAuthenticated, requiresTwoFactor, user } = useSelector(
     (state: RootState) => state.auth
   );
 
@@ -36,10 +36,21 @@ export default function LoginForm() {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    if (isAuthenticated && user) {
+      switch (user.role) {
+        case 'ORGANISER':
+          router.push('/organizer');
+          break;
+        case 'ADMIN':
+          router.push('/admin');
+          break;
+        case 'CUSTOMER':
+        default:
+          router.push('/dashboard');
+          break;
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const onSubmit = (data: LoginFormData) => {
     dispatch(loginUser(data));

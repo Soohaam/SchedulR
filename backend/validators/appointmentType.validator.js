@@ -32,6 +32,16 @@ const cancellationPolicySchema = z.object({
   noShowPolicy: z.string().trim().max(1000).optional(),
 });
 
+// Working hours schema
+const workingHoursSchema = z.object({
+  dayOfWeek: z.number().int().min(0).max(6),
+  isWorking: z.boolean().default(true),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
+  breakStart: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)').optional().nullable(),
+  breakEnd: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)').optional().nullable(),
+});
+
 // Create appointment type schema
 const createAppointmentTypeSchema = z.object({
   body: z.object({
@@ -56,6 +66,7 @@ const createAppointmentTypeSchema = z.object({
     isPublished: z.boolean().default(false),
     questions: z.array(questionSchema).optional(),
     cancellationPolicy: cancellationPolicySchema.optional(),
+    workingHours: z.array(workingHoursSchema).optional(),
   }).refine(data => {
     if (data.requiresPayment && (!data.price || data.price <= 0)) {
       return false;
@@ -89,6 +100,9 @@ const updateAppointmentTypeSchema = z.object({
     bufferTimeMinutes: z.number().int().min(0).optional(),
     confirmationMessage: z.string().trim().max(2000).optional().nullable(),
     isPublished: z.boolean().optional(),
+    questions: z.array(questionSchema).optional(),
+    cancellationPolicy: cancellationPolicySchema.optional(),
+    workingHours: z.array(workingHoursSchema).optional(),
   }),
 });
 

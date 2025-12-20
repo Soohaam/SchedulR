@@ -31,7 +31,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function RegisterForm() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { isLoading, error, isAuthenticated } = useSelector(
+  const { isLoading, error, isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
   );
   const [role, setRole] = useState<'customer' | 'organiser'>('customer');
@@ -46,10 +46,21 @@ export default function RegisterForm() {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    if (isAuthenticated && user) {
+      switch (user.role) {
+        case 'ORGANISER':
+          router.push('/organizer');
+          break;
+        case 'ADMIN':
+          router.push('/admin');
+          break;
+        case 'CUSTOMER':
+        default:
+          router.push('/dashboard');
+          break;
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const onSubmit = (data: RegisterFormData) => {
     const { confirmPassword, ...userData } = data;

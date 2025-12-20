@@ -36,20 +36,23 @@ const createAppointmentType = async (organizerId, data) => {
     isPublished,
     questions,
     cancellationPolicy,
+    workingHours,
   } = data;
 
   // Generate unique share link
   const shareLink = generateShareLink();
+  const id = crypto.randomUUID();
 
   // Create appointment type
   const appointmentTypeResult = await pool.query(
     `INSERT INTO "AppointmentType" 
-      ("title", "description", "duration", "type", "location", "meetingUrl", "introductoryMessage", "color", "maxBookingsPerSlot", 
+      ("id", "title", "description", "duration", "type", "location", "meetingUrl", "introductoryMessage", "color", "maxBookingsPerSlot", 
        "manageCapacity", "requiresPayment", "price", "manualConfirmation", "autoAssignment", "minAdvanceBookingMinutes", 
        "maxAdvanceBookingDays", "bufferTimeMinutes", "confirmationMessage", "isPublished", "shareLink", "organizerId", "createdAt", "updatedAt")
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW(), NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, NOW(), NOW())
      RETURNING *`,
     [
+      id,
       title,
       description || null,
       duration,
@@ -79,11 +82,13 @@ const createAppointmentType = async (organizerId, data) => {
   // Create questions if provided
   if (questions && questions.length > 0) {
     for (const question of questions) {
+      const qId = crypto.randomUUID();
       await pool.query(
         `INSERT INTO "Question" 
-          ("appointmentTypeId", "questionText", "questionType", "options", "isRequired", "order", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+          ("id", "appointmentTypeId", "questionText", "questionType", "options", "isRequired", "order", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
         [
+          qId,
           appointmentType.id,
           question.questionText,
           question.questionType,
@@ -97,11 +102,13 @@ const createAppointmentType = async (organizerId, data) => {
 
   // Create cancellation policy if provided
   if (cancellationPolicy) {
+    const pId = crypto.randomUUID();
     await pool.query(
       `INSERT INTO "CancellationPolicy"
-        ("appointmentTypeId", "allowCancellation", "cancellationDeadlineHours", "refundPercentage", "cancellationFee", "noShowPolicy", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+        ("id", "appointmentTypeId", "allowCancellation", "cancellationDeadlineHours", "refundPercentage", "cancellationFee", "noShowPolicy", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
       [
+        pId,
         appointmentType.id,
         cancellationPolicy.allowCancellation ?? true,
         cancellationPolicy.cancellationDeadlineHours || 24,
@@ -110,6 +117,39 @@ const createAppointmentType = async (organizerId, data) => {
         cancellationPolicy.noShowPolicy || null,
       ]
     );
+  }
+
+  // Create working hours if provided
+  if (workingHours && workingHours.length > 0) {
+    for (const wh of workingHours) {
+      const whId = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO "WorkingHours"
+          ("id", "appointmentTypeId", "dayOfWeek", "isWorking", "startTime", "endTime", "breakStart", "breakEnd", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+        [
+          whId,
+          appointmentType.id,
+          wh.dayOfWeek,
+          wh.isWorking,
+          wh.startTime,
+          wh.endTime,
+          wh.breakStart || null,
+          wh.breakEnd || null,
+        ]
+      );
+    }
+  } else {
+    // Default 9-5 Mon-Fri if not provided
+    for (let i = 1; i <= 5; i++) {
+      const whId = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO "WorkingHours"
+              ("id", "appointmentTypeId", "dayOfWeek", "isWorking", "startTime", "endTime", "createdAt", "updatedAt")
+             VALUES ($1, $2, $3, true, '09:00', '17:00', NOW(), NOW())`,
+        [whId, appointmentType.id, i]
+      );
+    }
   }
 
   return {
@@ -341,40 +381,128 @@ const updateAppointmentType = async (organizerId, appointmentTypeId, data) => {
     throw new AppError('Appointment type not found', StatusCodes.NOT_FOUND);
   }
 
+  const { questions, cancellationPolicy, workingHours, ...updateData } = data;
+
   // Build update query dynamically
   const updateFields = [];
   const updateValues = [];
   let paramIndex = 1;
 
-  Object.entries(data).forEach(([key, value]) => {
-    updateFields.push(`"${key}" = $${paramIndex}`);
-    updateValues.push(value);
-    paramIndex++;
-  });
+  if (Object.keys(updateData).length > 0) {
+    Object.entries(updateData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        updateFields.push(`"${key}" = $${paramIndex}`);
+        updateValues.push(value);
+        paramIndex++;
+      }
+    });
 
-  updateFields.push(`"updatedAt" = NOW()`);
+    if (updateFields.length > 0) {
+      updateFields.push(`"updatedAt" = NOW()`);
 
-  const updateQuery = `
-    UPDATE "AppointmentType"
-    SET ${updateFields.join(', ')}
-    WHERE "id" = $${paramIndex} AND "organizerId" = $${paramIndex + 1}
-    RETURNING *
-  `;
+      const updateQuery = `
+          UPDATE "AppointmentType"
+          SET ${updateFields.join(', ')}
+          WHERE "id" = $${paramIndex} AND "organizerId" = $${paramIndex + 1}
+          RETURNING *
+        `;
 
-  const result = await pool.query(updateQuery, [...updateValues, appointmentTypeId, organizerId]);
+      await pool.query(updateQuery, [...updateValues, appointmentTypeId, organizerId]);
+    }
+  }
 
-  const appointmentType = result.rows[0];
+  // Update questions
+  if (questions) {
+    // Delete existing questions
+    await pool.query('DELETE FROM "Question" WHERE "appointmentTypeId" = $1', [appointmentTypeId]);
 
-  return {
-    id: appointmentType.id,
-    title: appointmentType.title,
-    description: appointmentType.description,
-    duration: appointmentType.duration,
-    type: appointmentType.type,
-    price: appointmentType.price ? parseFloat(appointmentType.price) : null,
-    isPublished: appointmentType.isPublished,
-    updatedAt: appointmentType.updatedAt,
-  };
+    // Insert new questions
+    for (const question of questions) {
+      const qId = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO "Question" 
+            ("id", "appointmentTypeId", "questionText", "questionType", "options", "isRequired", "order", "createdAt", "updatedAt")
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+        [
+          qId,
+          appointmentTypeId,
+          question.questionText,
+          question.questionType,
+          question.options ? JSON.stringify(question.options) : null,
+          question.isRequired || false,
+          question.order || 0,
+        ]
+      );
+    }
+  }
+
+  // Update cancellation policy
+  if (cancellationPolicy) {
+    // Check if exists
+    const existingPolicy = await pool.query('SELECT id FROM "CancellationPolicy" WHERE "appointmentTypeId" = $1', [appointmentTypeId]);
+
+    if (existingPolicy.rows.length > 0) {
+      await pool.query(
+        `UPDATE "CancellationPolicy" 
+               SET "allowCancellation" = $1, "cancellationDeadlineHours" = $2, "refundPercentage" = $3, 
+                   "cancellationFee" = $4, "noShowPolicy" = $5, "updatedAt" = NOW()
+               WHERE "appointmentTypeId" = $6`,
+        [
+          cancellationPolicy.allowCancellation ?? true,
+          cancellationPolicy.cancellationDeadlineHours || 24,
+          cancellationPolicy.refundPercentage || 100,
+          cancellationPolicy.cancellationFee || null,
+          cancellationPolicy.noShowPolicy || null,
+          appointmentTypeId
+        ]
+      );
+    } else {
+      const pId = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO "CancellationPolicy"
+              ("id", "appointmentTypeId", "allowCancellation", "cancellationDeadlineHours", "refundPercentage", "cancellationFee", "noShowPolicy", "createdAt", "updatedAt")
+             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+        [
+          pId,
+          appointmentTypeId,
+          cancellationPolicy.allowCancellation ?? true,
+          cancellationPolicy.cancellationDeadlineHours || 24,
+          cancellationPolicy.refundPercentage || 100,
+          cancellationPolicy.cancellationFee || null,
+          cancellationPolicy.noShowPolicy || null,
+        ]
+      );
+    }
+  }
+
+  // Update working hours
+  if (workingHours) {
+    // Delete existing
+    await pool.query('DELETE FROM "WorkingHours" WHERE "appointmentTypeId" = $1', [appointmentTypeId]);
+
+    // Insert new
+    for (const wh of workingHours) {
+      const whId = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO "WorkingHours"
+            ("id", "appointmentTypeId", "dayOfWeek", "isWorking", "startTime", "endTime", "breakStart", "breakEnd", "createdAt", "updatedAt")
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+        [
+          whId,
+          appointmentTypeId,
+          wh.dayOfWeek,
+          wh.isWorking,
+          wh.startTime,
+          wh.endTime,
+          wh.breakStart || null,
+          wh.breakEnd || null,
+        ]
+      );
+    }
+  }
+
+  // Fetch updated object to return
+  return await getAppointmentTypeById(organizerId, appointmentTypeId);
 };
 
 /**
@@ -506,7 +634,7 @@ const setCancellationPolicy = async (organizerId, appointmentTypeId, policyData)
   );
 
   let policy;
-  
+
   if (existingPolicyResult.rows.length > 0) {
     // Update existing policy
     const updateResult = await pool.query(
@@ -520,12 +648,13 @@ const setCancellationPolicy = async (organizerId, appointmentTypeId, policyData)
     policy = updateResult.rows[0];
   } else {
     // Create new policy
+    const pId = crypto.randomUUID();
     const createResult = await pool.query(
       `INSERT INTO "CancellationPolicy" 
-        ("allowCancellation", "cancellationDeadlineHours", "refundPercentage", "cancellationFee", "noShowPolicy", "appointmentTypeId", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        ("id", "allowCancellation", "cancellationDeadlineHours", "refundPercentage", "cancellationFee", "noShowPolicy", "appointmentTypeId", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
        RETURNING *`,
-      [allowCancellation, cancellationDeadlineHours, refundPercentage, cancellationFee, noShowPolicy, appointmentTypeId]
+      [pId, allowCancellation, cancellationDeadlineHours, refundPercentage, cancellationFee, noShowPolicy, appointmentTypeId]
     );
     policy = createResult.rows[0];
   }

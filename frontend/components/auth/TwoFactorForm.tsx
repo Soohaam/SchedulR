@@ -20,7 +20,7 @@ type TwoFactorFormData = z.infer<typeof twoFactorSchema>;
 export default function TwoFactorForm() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { isLoading, error, isAuthenticated, twoFactorToken } = useSelector(
+  const { isLoading, error, isAuthenticated, twoFactorToken, user } = useSelector(
     (state: RootState) => state.auth
   );
 
@@ -33,10 +33,21 @@ export default function TwoFactorForm() {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    if (isAuthenticated && user) {
+      switch (user.role) {
+        case 'ORGANISER':
+          router.push('/organizer');
+          break;
+        case 'ADMIN':
+          router.push('/admin');
+          break;
+        case 'CUSTOMER':
+        default:
+          router.push('/dashboard');
+          break;
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const onSubmit = (data: TwoFactorFormData) => {
     if (twoFactorToken) {
