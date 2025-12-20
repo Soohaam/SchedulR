@@ -115,10 +115,19 @@ const updateCancellationPolicySchema = z.object({
   body: cancellationPolicySchema,
 });
 
+// Set cancellation policy schema (for POST endpoint)
+const setCancellationPolicySchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid appointment type ID'),
+  }),
+  body: cancellationPolicySchema,
+});
+
 module.exports = {
   createAppointmentTypeSchema,
   updateAppointmentTypeSchema,
   listAppointmentTypesSchema,
   addQuestionsSchema,
   updateCancellationPolicySchema,
+  setCancellationPolicySchema,
 };

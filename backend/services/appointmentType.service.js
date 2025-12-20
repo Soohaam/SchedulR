@@ -483,6 +483,90 @@ const deleteAppointmentType = async (organizerId, appointmentTypeId) => {
   };
 };
 
+/**
+ * Set or update cancellation policy for appointment type
+ */
+const setCancellationPolicy = async (organizerId, appointmentTypeId, policyData) => {
+  const { allowCancellation, cancellationDeadlineHours, refundPercentage, cancellationFee, noShowPolicy } = policyData;
+
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Check if cancellation policy already exists
+  const existingPolicyResult = await pool.query(
+    'SELECT * FROM "CancellationPolicy" WHERE "appointmentTypeId" = $1',
+    [appointmentTypeId]
+  );
+
+  let policy;
+  
+  if (existingPolicyResult.rows.length > 0) {
+    // Update existing policy
+    const updateResult = await pool.query(
+      `UPDATE "CancellationPolicy" 
+       SET "allowCancellation" = $1, "cancellationDeadlineHours" = $2, "refundPercentage" = $3, 
+           "cancellationFee" = $4, "noShowPolicy" = $5, "updatedAt" = NOW()
+       WHERE "appointmentTypeId" = $6
+       RETURNING *`,
+      [allowCancellation, cancellationDeadlineHours, refundPercentage, cancellationFee, noShowPolicy, appointmentTypeId]
+    );
+    policy = updateResult.rows[0];
+  } else {
+    // Create new policy
+    const createResult = await pool.query(
+      `INSERT INTO "CancellationPolicy" 
+        ("allowCancellation", "cancellationDeadlineHours", "refundPercentage", "cancellationFee", "noShowPolicy", "appointmentTypeId", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+       RETURNING *`,
+      [allowCancellation, cancellationDeadlineHours, refundPercentage, cancellationFee, noShowPolicy, appointmentTypeId]
+    );
+    policy = createResult.rows[0];
+  }
+
+  return policy;
+};
+
+/**
+ * Get cancellation policy for appointment type
+ */
+const getCancellationPolicy = async (organizerId, appointmentTypeId) => {
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Fetch cancellation policy
+  const policyResult = await pool.query(
+    'SELECT * FROM "CancellationPolicy" WHERE "appointmentTypeId" = $1',
+    [appointmentTypeId]
+  );
+
+  if (policyResult.rows.length === 0) {
+    // Return default policy if none exists
+    return {
+      allowCancellation: true,
+      cancellationDeadlineHours: 24,
+      refundPercentage: 100,
+      cancellationFee: 0,
+      noShowPolicy: null,
+    };
+  }
+
+  return policyResult.rows[0];
+};
+
 module.exports = {
   createAppointmentType,
   listAppointmentTypes,
@@ -491,4 +575,6 @@ module.exports = {
   publishAppointmentType,
   unpublishAppointmentType,
   deleteAppointmentType,
+  setCancellationPolicy,
+  getCancellationPolicy,
 };

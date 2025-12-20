@@ -129,6 +129,42 @@ const deleteAppointmentType = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Set cancellation policy
+ * POST /api/organiser/appointment-types/:id/cancellation-policy
+ */
+const setCancellationPolicy = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can set cancellation policies', StatusCodes.FORBIDDEN);
+  }
+
+  const policy = await appointmentTypeService.setCancellationPolicy(req.user.id, req.params.id, req.body);
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    policy,
+  });
+});
+
+/**
+ * Get cancellation policy
+ * GET /api/organiser/appointment-types/:id/cancellation-policy
+ */
+const getCancellationPolicy = asyncHandler(async (req, res) => {
+  // Verify user is ORGANISER
+  if (req.user.role !== 'ORGANISER') {
+    throw new AppError('Only organisers can view cancellation policies', StatusCodes.FORBIDDEN);
+  }
+
+  const policy = await appointmentTypeService.getCancellationPolicy(req.user.id, req.params.id);
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    policy,
+  });
+});
+
 module.exports = {
   createAppointmentType,
   listAppointmentTypes,
@@ -137,4 +173,6 @@ module.exports = {
   publishAppointmentType,
   unpublishAppointmentType,
   deleteAppointmentType,
+  setCancellationPolicy,
+  getCancellationPolicy,
 };

@@ -6,6 +6,7 @@ const {
   createAppointmentTypeSchema,
   updateAppointmentTypeSchema,
   listAppointmentTypesSchema,
+  setCancellationPolicySchema,
 } = require('../validators/appointmentType.validator');
 
 const router = express.Router();
@@ -56,6 +57,19 @@ router.post(
 router.delete(
   '/:id',
   appointmentTypeController.deleteAppointmentType
+);
+
+// Set cancellation policy
+router.post(
+  '/:id/cancellation-policy',
+  validateRequest(setCancellationPolicySchema),
+  appointmentTypeController.setCancellationPolicy
+);
+
+// Get cancellation policy
+router.get(
+  '/:id/cancellation-policy',
+  appointmentTypeController.getCancellationPolicy
 );
 
 module.exports = router;
