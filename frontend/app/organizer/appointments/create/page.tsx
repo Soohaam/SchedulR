@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/lib/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/lib/store';
 import { createAppointmentType, updateAppointmentType, fetchAppointmentTypeById } from '@/lib/features/organizer/appointmentTypeSlice';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Save, Calendar, HelpCircle, Settings, FileText, Clock, Plus, Trash2, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/MultiSelect';
+import { ArrowLeft, Save, Calendar, HelpCircle, Settings, FileText, Clock, Plus, Trash2, Upload, X, Image as ImageIcon, Users, Box } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -20,10 +22,15 @@ export default function CreateAppointmentTypePage() {
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
   const isEditMode = !!editId;
+  const { token } = useSelector((state: RootState) => state.auth);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+
+  // Dynamic Data
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -36,6 +43,13 @@ export default function CreateAppointmentTypePage() {
     color: '#C5A05C',
     introductoryMessage: '',
     confirmationMessage: '',
+    manualConfirmation: false,
+    requiresPayment: false,
+    autoAssignment: true,
+    manageCapacity: true,
+    maxBookingsPerSlot: 1,
+    assignedStaffIds: [] as string[],
+    assignedResourceIds: [] as string[],
   });
 
   // Schedule State
@@ -64,6 +78,24 @@ export default function CreateAppointmentTypePage() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Fetch Staff and Resources
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+      try {
+        const [staffRes, resourceRes] = await Promise.all([
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/staff`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/resources`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+        setStaffMembers(staffRes.data.data || []);
+        setResources(resourceRes.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch staff/resources:', error);
+      }
+    };
+    fetchData();
+  }, [token]);
+
   // Fetch existing appointment data if in edit mode
   useEffect(() => {
     if (editId) {
@@ -82,6 +114,13 @@ export default function CreateAppointmentTypePage() {
             color: appointment.color || '#C5A05C',
             introductoryMessage: appointment.introductoryMessage || '',
             confirmationMessage: appointment.confirmationMessage || '',
+            manualConfirmation: appointment.manualConfirmation || false,
+            requiresPayment: appointment.requiresPayment || false,
+            autoAssignment: appointment.autoAssignment ?? true,
+            manageCapacity: appointment.manageCapacity ?? true,
+            maxBookingsPerSlot: appointment.maxBookingsPerSlot || 1,
+            assignedStaffIds: appointment.assignedStaffIds || [],
+            assignedResourceIds: appointment.assignedResourceIds || [],
           });
 
           // Pre-fill working hours
@@ -140,7 +179,7 @@ export default function CreateAppointmentTypePage() {
     setSelectedFile(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, shouldPublish = false) => {
     e.preventDefault();
     setIsLoading(true);
     try {
@@ -149,6 +188,7 @@ export default function CreateAppointmentTypePage() {
         workingHours,
         questions: questions.map((q, i) => ({ ...q, order: i })),
         cancellationPolicy: policy,
+        isPublished: shouldPublish,
       };
 
       let appointmentId;
@@ -226,14 +266,24 @@ export default function CreateAppointmentTypePage() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading || isFetching}
-          className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/90 hover:via-accent/80 hover:to-accent/70 text-accent-foreground shadow-xl shadow-accent/30 hover:shadow-2xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 min-w-[140px] font-semibold"
-        >
-          {isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Update' : 'Save & Publish')}
-          {!isLoading && <Save className="w-5 h-5 ml-2" />}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={(e) => handleSubmit(e, false)}
+            disabled={isLoading || isFetching}
+            className="font-semibold"
+          >
+            Save Draft
+          </Button>
+          <Button
+            onClick={(e) => handleSubmit(e, true)}
+            disabled={isLoading || isFetching}
+            className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/90 hover:via-accent/80 hover:to-accent/70 text-accent-foreground shadow-xl shadow-accent/30 hover:shadow-2xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 min-w-[140px] font-semibold"
+          >
+            {isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Update & Publish' : 'Save & Publish')}
+            {!isLoading && <Save className="w-5 h-5 ml-2" />}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -243,7 +293,7 @@ export default function CreateAppointmentTypePage() {
             { id: 'general', label: 'General Info', icon: FileText },
             { id: 'schedule', label: 'Availability', icon: Calendar },
             { id: 'questions', label: 'Questions', icon: HelpCircle },
-            { id: 'options', label: 'Options/Policy', icon: Settings },
+            { id: 'options', label: 'Options & Policy', icon: Settings },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -298,6 +348,88 @@ export default function CreateAppointmentTypePage() {
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         />
                       </div>
+
+                      {/* BOOK TYPE */}
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Book</label>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-md has-[:checked]:bg-primary/5 has-[:checked]:border-primary transition-all">
+                            <input
+                              type="radio"
+                              name="bookType"
+                              className="accent-primary"
+                              checked={formData.type === 'USER'}
+                              onChange={() => setFormData({ ...formData, type: 'USER' })}
+                            />
+                            <Users className="w-4 h-4" />
+                            <span>User / Staff</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-md has-[:checked]:bg-primary/5 has-[:checked]:border-primary transition-all">
+                            <input
+                              type="radio"
+                              name="bookType"
+                              className="accent-primary"
+                              checked={formData.type === 'RESOURCE'}
+                              onChange={() => setFormData({ ...formData, type: 'RESOURCE' })}
+                            />
+                            <Box className="w-4 h-4" />
+                            <span>Resources</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* HOST/RESOURCE SELECTION */}
+                      {formData.type === 'USER' ? (
+                        <div className="space-y-2">
+                          <MultiSelect
+                            label="Available Staff (Hosts)"
+                            placeholder="Select staff members..."
+                            options={staffMembers.map(s => ({ id: s.id, label: s.name, subLabel: s.email }))}
+                            selected={formData.assignedStaffIds}
+                            onChange={(selected) => setFormData({ ...formData, assignedStaffIds: selected })}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <MultiSelect
+                            label="Available Resources"
+                            placeholder="Select resources..."
+                            options={resources.map(r => ({ id: r.id, label: r.name, subLabel: r.description }))}
+                            selected={formData.assignedResourceIds}
+                            onChange={(selected) => setFormData({ ...formData, assignedResourceIds: selected })}
+                          />
+                        </div>
+                      )}
+
+                      {/* ASSIGNMENT TYPE */}
+                      {formData.type === 'USER' && (
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Assignment</label>
+                          <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="assignment"
+                                className="accent-primary"
+                                checked={formData.autoAssignment}
+                                onChange={() => setFormData({ ...formData, autoAssignment: true })}
+                              />
+                              <span>Automatically (Round Robin)</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="assignment"
+                                className="accent-primary"
+                                checked={!formData.autoAssignment}
+                                onChange={() => setFormData({ ...formData, autoAssignment: false })}
+                              />
+                              <span>By visitor choice</span>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="text-sm font-medium mb-1 block">Duration (minutes)</label>
@@ -526,6 +658,35 @@ export default function CreateAppointmentTypePage() {
                     </h2>
 
                     <div className="space-y-6">
+                      {/* Booking Settings */}
+                      <div className="space-y-4">
+                        <h3 className="text-md font-medium border-b pb-2">Booking Settings</h3>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="manualConfirmation"
+                              checked={formData.manualConfirmation}
+                              onChange={(e) => setFormData({ ...formData, manualConfirmation: e.target.checked })}
+                              className="w-4 h-4 accent-primary"
+                            />
+                            <label htmlFor="manualConfirmation" className="text-sm">Manual confirmation required</label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="requiresPayment"
+                              checked={formData.requiresPayment}
+                              onChange={(e) => setFormData({ ...formData, requiresPayment: e.target.checked })}
+                              className="w-4 h-4 accent-primary"
+                            />
+                            <label htmlFor="requiresPayment" className="text-sm">Requires payment (Paid Booking)</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cancellation Policy */}
                       <div className="space-y-4">
                         <h3 className="text-md font-medium border-b pb-2">Cancellation Policy</h3>
                         <div className="flex items-center gap-2">
@@ -564,6 +725,7 @@ export default function CreateAppointmentTypePage() {
                         )}
                       </div>
 
+                      {/* Messages */}
                       <div className="space-y-4">
                         <h3 className="text-md font-medium border-b pb-2">Messages</h3>
                         <div>

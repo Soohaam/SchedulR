@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Plus, Search, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, Loader2, Users } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import axios from 'axios';
@@ -15,7 +15,7 @@ export default function ResourcesSettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newResource, setNewResource] = useState({ name: '', description: '', location: '', resourceType: 'OTHER' });
+    const [newResource, setNewResource] = useState({ name: '', description: '', location: '', resourceType: 'OTHER', capacity: 1 });
 
     const { token } = useSelector((state: RootState) => state.auth);
 
@@ -45,7 +45,7 @@ export default function ResourcesSettingsPage() {
             });
             toast.success('Resource created');
             setIsModalOpen(false);
-            setNewResource({ name: '', description: '', location: '', resourceType: 'OTHER' });
+            setNewResource({ name: '', description: '', location: '', resourceType: 'OTHER', capacity: 1 });
             fetchResources();
         } catch (error) {
             toast.error('Failed to create resource');
@@ -96,11 +96,24 @@ export default function ResourcesSettingsPage() {
                             value={newResource.description}
                             onChange={e => setNewResource({ ...newResource, description: e.target.value })}
                         />
-                        <Input
-                            placeholder="Location"
-                            value={newResource.location}
-                            onChange={e => setNewResource({ ...newResource, location: e.target.value })}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input
+                                placeholder="Location"
+                                value={newResource.location}
+                                onChange={e => setNewResource({ ...newResource, location: e.target.value })}
+                            />
+                            <div className="relative">
+                                <Users className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    placeholder="Capacity"
+                                    className="pl-9"
+                                    value={newResource.capacity}
+                                    onChange={e => setNewResource({ ...newResource, capacity: parseInt(e.target.value) || 1 })}
+                                />
+                            </div>
+                        </div>
                         <select
                             className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                             value={newResource.resourceType}
@@ -125,7 +138,13 @@ export default function ResourcesSettingsPage() {
                 ) : filteredResources.map((resource) => (
                     <Card key={resource.id} className="p-4 flex items-center justify-between">
                         <div>
-                            <h3 className="font-semibold">{resource.name}</h3>
+                            <h3 className="font-semibold flex items-center gap-2">
+                                {resource.name}
+                                <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <Users className="w-3 h-3" />
+                                    {resource.capacity}
+                                </span>
+                            </h3>
                             <p className="text-sm text-muted-foreground">{resource.description || 'No description'}</p>
                             {resource.location && (
                                 <p className="text-xs text-muted-foreground mt-1">📍 {resource.location}</p>
