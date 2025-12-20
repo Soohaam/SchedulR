@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/store';
-import { fetchAppointmentTypes } from '@/lib/features/organizer/appointmentTypeSlice';
+import { fetchAppointmentTypes, publishAppointmentType, unpublishAppointmentType, deleteAppointmentType } from '@/lib/features/organizer/appointmentTypeSlice';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Plus, Clock, ExternalLink, Edit, MoreVertical, Copy, Globe, Upload, X, Image as ImageIcon, Calendar } from 'lucide-react';
+import { Plus, Clock, ExternalLink, Edit, MoreVertical, Copy, Globe, Upload, X, Image as ImageIcon, Calendar, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -121,88 +121,186 @@ export default function AppointmentTypesPage() {
 
       <div className="space-y-4">
         {isLoading ? (
-          <p className="text-muted-foreground text-center py-12">Loading appointment types...</p>
-        ) : types.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-xl border border-border/50">
-            <p className="text-muted-foreground mb-4">You haven't created any appointment types yet.</p>
-            <Link href="/organizer/appointments/create">
-              <Button variant="outline">Create your first one</Button>
-            </Link>
+          <div className="text-center py-16">
+            <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-accent border-t-transparent shadow-lg" />
+            <p className="text-muted-foreground mt-4 text-lg font-medium">Loading your appointments...</p>
           </div>
+        ) : types.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-16 bg-gradient-to-br from-card/90 via-card/70 to-card/50 backdrop-blur-xl rounded-2xl border border-border/50 shadow-2xl relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-primary/5 to-accent/5 animate-pulse" />
+            <Calendar className="w-24 h-24 text-accent/30 mx-auto mb-6 relative z-10" />
+            <p className="text-muted-foreground mb-6 text-lg font-medium relative z-10">You haven't created any appointment types yet.</p>
+            <Link href="/organizer/appointments/create">
+              <Button className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/90 hover:via-accent/80 hover:to-accent/70 text-accent-foreground shadow-xl shadow-accent/30 hover:shadow-2xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 relative z-10 text-base px-6 py-6">
+                <Plus className="w-5 h-5 mr-2" />
+                Create Your First Appointment
+              </Button>
+            </Link>
+          </motion.div>
         ) : (
-          types.map((type) => (
+          types.map((type, index) => (
             <motion.div
               key={type.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.08 }}
+              whileHover={{ scale: 1.01 }}
               className="group relative"
             >
-              <Card className="p-6 bg-card border-border/50 shadow-sm hover:shadow-md transition-all border-l-4 border-l-primary flex flex-col md:flex-row items-start md:items-center gap-6">
+              <Card className="p-6 bg-gradient-to-br from-card/95 via-card/85 to-card/75 backdrop-blur-xl border-border/50 shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-l-accent hover:border-l-primary flex flex-col md:flex-row items-start md:items-center gap-6 relative overflow-hidden">
+                {/* Animated background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-accent/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
                 {/* Left: Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
+                <div className="flex-1 min-w-0 relative z-10">
+                  <div className="flex items-center gap-4 mb-2">
                     {/* Profile Image Circle */}
                     {type.profileImage ? (
-                      <img
+                      <motion.img
+                        whileHover={{ scale: 1.15, rotate: 8 }}
+                        transition={{ type: "spring", stiffness: 300 }}
                         src={type.profileImage}
                         alt={type.title || type.name}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-accent/30"
+                        className="w-16 h-16 rounded-full object-cover border-3 border-accent/50 shadow-xl shadow-accent/20 ring-2 ring-accent/20"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center border-2 border-accent/20">
-                        <Calendar className="w-6 h-6 text-accent/60" />
-                      </div>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: -8 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                        className="w-16 h-16 rounded-full bg-gradient-to-br from-accent/40 via-accent/25 to-accent/15 flex items-center justify-center border-3 border-accent/40 shadow-xl shadow-accent/15 ring-2 ring-accent/20"
+                      >
+                        <Calendar className="w-8 h-8 text-accent" />
+                      </motion.div>
                     )}
-                    <h3 className="text-lg font-semibold text-foreground truncate">{type.title || type.name}</h3>
-                    {/* Published Badge - Inline */}
-                    {type.isPublished && (
-                      <span className="ml-2 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border border-green-600/20 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded">
-                        Published
-                      </span>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-bold text-primary group-hover:text-accent transition-colors duration-300 truncate mb-1">
+                        {type.title || type.name}
+                      </h3>
+                      {/* Published Badge - Inline */}
+                      {type.isPublished && (
+                        <motion.span
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: "spring", stiffness: 500, delay: 0.2 }}
+                          className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full shadow-md shadow-emerald-500/20"
+                        >
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
+                          Live
+                        </motion.span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground ml-15">
-                    <span className="flex items-center">
-                      <Clock className="w-4 h-4 mr-1.5 opacity-70" />
-                      {type.duration} Min Duration
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <div className="w-6 h-6 rounded bg-secondary flex items-center justify-center text-[10px] font-bold">R1</div>
-                      <div className="w-6 h-6 rounded bg-secondary flex items-center justify-center text-[10px] font-bold">R2</div>
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground ml-20">
+                    <motion.span whileHover={{ scale: 1.05 }} className="flex items-center gap-2 font-semibold bg-accent/10 px-3 py-1.5 rounded-full">
+                      <Clock className="w-4 h-4 text-accent" />
+                      {type.duration} Min
+                    </motion.span>
+                    <div className="flex items-center gap-2">
+                      <motion.div whileHover={{ scale: 1.1, rotate: 5 }} className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-primary/15 flex items-center justify-center text-xs font-bold border border-primary/30 shadow-md">R1</motion.div>
+                      <motion.div whileHover={{ scale: 1.1, rotate: -5 }} className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent/30 to-accent/15 flex items-center justify-center text-xs font-bold border border-accent/30 shadow-md">R2</motion.div>
                     </div>
-                    <span className="hidden md:inline-block">
-                      {type.statistics?.upcomingBookings || 0} Meeting Upcoming
-                    </span>
+                    <motion.span whileHover={{ scale: 1.05 }} className="hidden md:inline-flex items-center gap-2 font-semibold bg-primary/10 px-3 py-1.5 rounded-full">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      {type.statistics?.upcomingBookings || 0} Upcoming
+                    </motion.span>
                   </div>
                 </div>
 
                 {/* Right: Actions */}
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyLink(type.shareLink || '')}
-                    className="h-9"
-                  >
-                    <Copy className="w-3 h-3 mr-2" />
-                    Share
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openUploadModal(type.id)}
-                    className="h-9"
-                  >
-                    <Upload className="w-3 h-3 mr-2" />
-                    Image
-                  </Button>
-                  <Link href={`/organizer/appointments/create?edit=${type.id}`}>
-                    <Button variant="outline" size="sm" className="h-9">
-                      <Edit className="w-3 h-3 mr-2" />
-                      Edit
+                <div className="flex flex-wrap items-center gap-2 flex-shrink-0 relative z-10">
+                  {/* Publish/Unpublish Button */}
+                  {type.isPublished ? (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Unpublish this appointment? Customers won\'t be able to book it.')) {
+                            dispatch(unpublishAppointmentType(type.id));
+                          }
+                        }}
+                        className="h-10 border-2 border-orange-500/40 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 hover:border-orange-500/60 transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+                      >
+                        <Globe className="w-4 h-4 mr-2" />
+                        Unpublish
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => dispatch(publishAppointmentType(type.id))}
+                        className="h-10 border-2 border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20 hover:border-green-500/60 transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+                      >
+                        <Globe className="w-4 h-4 mr-2" />
+                        Publish
+                      </Button>
+                    </motion.div>
+                  )}
+
+                  {/* Share Button */}
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyLink(type.shareLink || '')}
+                      className="h-10 hover:bg-accent/15 hover:border-accent/60 hover:text-accent transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Share
                     </Button>
+                  </motion.div>
+
+                  {/* Image Upload Button */}
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openUploadModal(type.id)}
+                      className="h-10 hover:bg-primary/15 hover:border-primary/60 hover:text-primary transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Image
+                    </Button>
+                  </motion.div>
+
+                  {/* Edit Button */}
+                  <Link href={`/organizer/appointments/create?edit=${type.id}`}>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 hover:bg-blue-500/15 hover:border-blue-500/60 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    </motion.div>
                   </Link>
+
+                  {/* Delete Button */}
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`Delete "${type.title || type.name}"? This cannot be undone!`)) {
+                          dispatch(deleteAppointmentType(type.id));
+                        }
+                      }}
+                      className="h-10 border-2 border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 hover:border-red-500/60 transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </motion.div>
                 </div>
               </Card>
             </motion.div>

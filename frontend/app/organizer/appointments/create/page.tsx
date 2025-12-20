@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/lib/store';
-import { createAppointmentType } from '@/lib/features/organizer/appointmentTypeSlice';
-import { useRouter } from 'next/navigation';
+import { createAppointmentType, updateAppointmentType, fetchAppointmentTypeById } from '@/lib/features/organizer/appointmentTypeSlice';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -17,7 +17,12 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 export default function CreateAppointmentTypePage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditMode = !!editId;
+
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
 
   // Form State
@@ -59,6 +64,61 @@ export default function CreateAppointmentTypePage() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Fetch existing appointment data if in edit mode
+  useEffect(() => {
+    if (editId) {
+      setIsFetching(true);
+      dispatch(fetchAppointmentTypeById(editId))
+        .unwrap()
+        .then((appointment) => {
+          // Pre-fill form data
+          setFormData({
+            title: appointment.title || '',
+            description: appointment.description || '',
+            duration: appointment.duration || 30,
+            price: appointment.price || 0,
+            type: appointment.type || 'USER',
+            location: appointment.location || 'Online',
+            color: appointment.color || '#C5A05C',
+            introductoryMessage: appointment.introductoryMessage || '',
+            confirmationMessage: appointment.confirmationMessage || '',
+          });
+
+          // Pre-fill working hours
+          if (appointment.workingHours && appointment.workingHours.length > 0) {
+            setWorkingHours(appointment.workingHours);
+          }
+
+          // Pre-fill questions
+          if (appointment.questions && appointment.questions.length > 0) {
+            setQuestions(appointment.questions);
+          }
+
+          // Pre-fill cancellation policy
+          if (appointment.cancellationPolicy) {
+            setPolicy({
+              allowCancellation: appointment.cancellationPolicy.allowCancellation ?? true,
+              cancellationDeadlineHours: appointment.cancellationPolicy.cancellationDeadlineHours ?? 24,
+              refundPercentage: appointment.cancellationPolicy.refundPercentage ?? 100,
+              noShowPolicy: appointment.cancellationPolicy.noShowPolicy || '',
+            });
+          }
+
+          // Pre-fill profile image
+          if (appointment.profileImage) {
+            setProfileImage(appointment.profileImage);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to fetch appointment:', error);
+          alert('Failed to load appointment data');
+        })
+        .finally(() => {
+          setIsFetching(false);
+        });
+    }
+  }, [editId, dispatch]);
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -91,10 +151,19 @@ export default function CreateAppointmentTypePage() {
         cancellationPolicy: policy,
       };
 
-      const result = await dispatch(createAppointmentType(payload)).unwrap();
-      const appointmentId = result.appointmentType?.id || result.id;
+      let appointmentId;
 
-      // Upload image immediately after creation if selected
+      if (isEditMode && editId) {
+        // Update existing appointment
+        const result = await dispatch(updateAppointmentType({ id: editId, data: payload })).unwrap();
+        appointmentId = result.id || editId;
+      } else {
+        // Create new appointment
+        const result = await dispatch(createAppointmentType(payload)).unwrap();
+        appointmentId = result.appointmentType?.id || result.id;
+      }
+
+      // Upload image if selected
       if (selectedFile && appointmentId) {
         const imageFormData = new FormData();
         imageFormData.append('image', selectedFile);
@@ -111,8 +180,8 @@ export default function CreateAppointmentTypePage() {
 
       router.push('/organizer/appointments');
     } catch (error) {
-      console.error('Failed to create appointment type:', error);
-      alert('Failed to create appointment type. Please check your inputs.');
+      console.error(`Failed to ${isEditMode ? 'update' : 'create'} appointment type:`, error);
+      alert(`Failed to ${isEditMode ? 'update' : 'create'} appointment type. Please check your inputs.`);
     } finally {
       setIsLoading(false);
     }
@@ -149,17 +218,21 @@ export default function CreateAppointmentTypePage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-primary font-['Georgia']">Create Appointment Type</h1>
-            <p className="text-muted-foreground">Setup your new service.</p>
+            <h1 className="text-3xl font-bold text-primary font-['Georgia']">
+              {isEditMode ? 'Edit Appointment Type' : 'Create Appointment Type'}
+            </h1>
+            <p className="text-muted-foreground">
+              {isEditMode ? 'Update your service details.' : 'Setup your new service.'}
+            </p>
           </div>
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={isLoading}
-          className="metallic-gold-bg text-accent-foreground shadow-lg shadow-accent/20 min-w-[120px]"
+          disabled={isLoading || isFetching}
+          className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/90 hover:via-accent/80 hover:to-accent/70 text-accent-foreground shadow-xl shadow-accent/30 hover:shadow-2xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 min-w-[140px] font-semibold"
         >
-          {isLoading ? 'Saving...' : 'Save & Publish'}
-          {!isLoading && <Save className="w-4 h-4 ml-2" />}
+          {isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Update' : 'Save & Publish')}
+          {!isLoading && <Save className="w-5 h-5 ml-2" />}
         </Button>
       </div>
 
