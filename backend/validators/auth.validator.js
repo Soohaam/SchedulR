@@ -82,6 +82,21 @@ const emailVerificationSchema = z.object({
   }),
 });
 
+// Forgot password schema
+const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+  }),
+});
+
+// Reset password schema
+const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Reset token is required'),
+    password: passwordSchema,
+  }),
+});
+
 module.exports = {
   registerCustomerSchema,
   registerOrganiserSchema,
@@ -89,4 +104,6 @@ module.exports = {
   twoFactorVerifySchema,
   twoFactorCodeSchema,
   emailVerificationSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 };

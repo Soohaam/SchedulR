@@ -7,6 +7,8 @@ const {
   registerOrganiserSchema,
   loginSchema,
   emailVerificationSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } = require('../validators/auth.validator');
 
 const router = express.Router();
@@ -39,5 +41,19 @@ router.post('/logout', requireAuth, authController.logout);
 
 // Profile route
 router.get('/me', requireAuth, authController.getProfile);
+
+// Forgot password route
+router.post(
+  '/forgot-password',
+  validateRequest(forgotPasswordSchema),
+  authController.forgotPassword
+);
+
+// Reset password route
+router.post(
+  '/reset-password',
+  validateRequest(resetPasswordSchema),
+  authController.resetPassword
+);
 
 module.exports = router;

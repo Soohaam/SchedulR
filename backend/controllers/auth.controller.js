@@ -38,6 +38,18 @@ const logout = asyncHandler(async (req, res) => {
   res.status(StatusCodes.OK).json(result);
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const result = await authService.forgotPassword(req.body);
+
+  res.status(StatusCodes.OK).json(result);
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const result = await authService.resetPassword(req.body);
+
+  res.status(StatusCodes.OK).json(result);
+});
+
 module.exports = {
   registerCustomer,
   registerOrganiser,
@@ -45,4 +57,6 @@ module.exports = {
   login,
   logout,
   getProfile,
+  forgotPassword,
+  resetPassword,
 };

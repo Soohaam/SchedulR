@@ -5,12 +5,13 @@ const { pool } = require('../config/db');
 const AppError = require('../utils/appError');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { signAccessToken } = require('../utils/jwt');
-const { sendEmail } = require('../utils/email');
+const { sendEmail, sendPasswordResetEmail } = require('../utils/email');
 const { toPublicUser } = require('../utils/user');
 
 const TWO_FACTOR_SESSION_TTL_MINUTES = 5;
 const TWO_FACTOR_SESSION_TTL_MS = TWO_FACTOR_SESSION_TTL_MINUTES * 60 * 1000;
 const EMAIL_VERIFICATION_TTL_MINUTES = 15;
+const PASSWORD_RESET_TTL_MINUTES = 60;
 const OTP_WINDOW = 1;
 
 const hashToken = (token) =>
@@ -364,6 +365,137 @@ const getProfile = async (userId) => {
 };
 
 /**
+ * Forgot password - Generate and send password reset token
+ */
+const forgotPassword = async ({ email }) => {
+  const normalizedEmail = email.toLowerCase();
+
+  const userResult = await pool.query(
+    'SELECT * FROM "User" WHERE "email" = $1',
+    [normalizedEmail]
+  );
+  const user = userResult.rows[0];
+
+  // Always return success message to prevent email enumeration
+  if (!user) {
+    return {
+      message: 'If your email is registered, you will receive a password reset link shortly',
+    };
+  }
+
+  if (!user.isActive) {
+    return {
+      message: 'If your email is registered, you will receive a password reset link shortly',
+    };
+  }
+
+  // Generate a secure random token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60 * 1000);
+
+  // Delete any existing password reset tokens for this user
+  await pool.query(
+    'DELETE FROM "PasswordResetToken" WHERE "userId" = $1',
+    [user.id]
+  );
+
+  // Store the reset token in the database
+  await pool.query(
+    `INSERT INTO "PasswordResetToken" ("token", "expiresAt", "userId", "createdAt")
+     VALUES ($1, $2, $3, NOW())`,
+    [resetToken, expiresAt, user.id]
+  );
+
+  // Send password reset email
+  await sendPasswordResetEmail(user.email, user.fullName, resetToken);
+
+  return {
+    message: 'If your email is registered, you will receive a password reset link shortly',
+  };
+};
+
+/**
+ * Reset password using token
+ */
+const resetPassword = async ({ token, password }) => {
+  // Find the password reset token
+  const tokenResult = await pool.query(
+    `SELECT prt.*, u.* 
+     FROM "PasswordResetToken" prt
+     JOIN "User" u ON prt."userId" = u."id"
+     WHERE prt."token" = $1`,
+    [token]
+  );
+  const resetRecord = tokenResult.rows[0];
+
+  if (!resetRecord) {
+    throw new AppError(
+      'Invalid or expired password reset token',
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  // Check if token has expired
+  if (new Date() > new Date(resetRecord.expiresAt)) {
+    // Delete expired token
+    await pool.query(
+      'DELETE FROM "PasswordResetToken" WHERE "token" = $1',
+      [token]
+    );
+    throw new AppError(
+      'Password reset token has expired',
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  // Check if user is active
+  if (!resetRecord.isActive) {
+    throw new AppError(
+      'Your account is inactive. Please contact support',
+      StatusCodes.FORBIDDEN
+    );
+  }
+
+  // Hash the new password
+  const passwordHash = await hashPassword(password);
+
+  // Update the user's password
+  await pool.query(
+    `UPDATE "User"
+     SET "password" = $1, "updatedAt" = NOW()
+     WHERE "id" = $2`,
+    [passwordHash, resetRecord.userId]
+  );
+
+  // Delete the used reset token
+  await pool.query(
+    'DELETE FROM "PasswordResetToken" WHERE "token" = $1',
+    [token]
+  );
+
+  // Send confirmation email
+  await sendEmail({
+    to: resetRecord.email,
+    subject: 'Password Reset Successful - Odoo Appointment Booking',
+    text: `Hi ${resetRecord.fullName},\n\nYour password has been successfully reset.\n\nIf you did not make this change, please contact support immediately.\n\nBest regards,\nOdoo Appointment Booking Team`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Password Reset Successful</h2>
+        <p>Hi <strong>${resetRecord.fullName}</strong>,</p>
+        <p>Your password has been successfully reset.</p>
+        <p>If you did not make this change, please contact support immediately.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 12px;">Best regards,<br>Odoo Appointment Booking Team</p>
+      </div>
+    `,
+  });
+
+  return {
+    message: 'Password has been reset successfully. You can now login with your new password',
+  };
+};
+
+/**
  * Logout user
  * Note: Since we're using stateless JWT, logout is handled on the client side
  * by removing the token. This function can be used for logging purposes.
@@ -383,4 +515,6 @@ module.exports = {
   login,
   logout,
   getProfile,
+  forgotPassword,
+  resetPassword,
 };
