@@ -1,12 +1,17 @@
 const { StatusCodes } = require('http-status-codes');
 const { pool } = require('../config/db');
 const AppError = require('../utils/appError');
+const crypto = require('crypto');
 
 /**
  * Create a new staff member
  */
 const createStaffMember = async (organizerId, data) => {
   const { name, email, phone, title, specialization, description, profileImage, workingHours } = data;
+
+  if (!name || !email) {
+    throw new AppError('Name and Email are required', StatusCodes.BAD_REQUEST);
+  }
 
   // Check if email already exists for this organiser
   const existingStaffResult = await pool.query(
@@ -21,13 +26,26 @@ const createStaffMember = async (organizerId, data) => {
     );
   }
 
+  // Generate ID manually
+  const newId = crypto.randomUUID();
+
   // Create staff member
   const staffMemberResult = await pool.query(
     `INSERT INTO "StaffMember" 
-      ("name", "email", "phone", "title", "specialization", "description", "profileImage", "organizerId", "isActive", "createdAt", "updatedAt")
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, NOW(), NOW())
+      ("id", "name", "email", "phone", "title", "specialization", "description", "profileImage", "organizerId", "isActive", "createdAt", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, NOW(), NOW())
      RETURNING *`,
-    [name, email, phone || null, title || null, specialization || null, description || null, profileImage || null, organizerId]
+    [
+      newId,
+      name,
+      email,
+      phone || null,
+      title || null,
+      specialization || null,
+      description || null,
+      profileImage || null,
+      organizerId
+    ]
   );
 
   const staffMember = staffMemberResult.rows[0];
@@ -200,7 +218,7 @@ const getStaffMemberById = async (organizerId, staffMemberId) => {
       totalBookings: parseInt(totalBookingsResult.rows[0].count),
       upcomingBookings: parseInt(upcomingBookingsResult.rows[0].count),
       completedBookings: parseInt(completedBookingsResult.rows[0].count),
-      averageRating: averageRatingResult.rows[0].averageRating 
+      averageRating: averageRatingResult.rows[0].averageRating
         ? parseFloat(averageRatingResult.rows[0].averageRating).toFixed(1)
         : null,
     },

@@ -3,23 +3,32 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/lib/store';
-import { fetchAppointmentTypeById, updateAppointmentType } from '@/lib/features/organizer/appointmentTypeSlice';
+import { fetchAppointmentTypeById, updateAppointmentType, publishAppointmentType, unpublishAppointmentType } from '@/lib/features/organizer/appointmentTypeSlice';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Save, Calendar, HelpCircle, Settings, FileText, Clock, Plus, Trash2 } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/MultiSelect';
+import { ArrowLeft, Save, Calendar, HelpCircle, Settings, FileText, Clock, Plus, Trash2, Globe, Lock, Users, Box } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/store';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function EditAppointmentTypePage({ params }: { params: { id: string } }) {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { token } = useSelector((state: RootState) => state.auth);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [activeTab, setActiveTab] = useState('general');
+
+  // Dynamic Data
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -32,7 +41,17 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
     color: '#C5A05C',
     introductoryMessage: '',
     confirmationMessage: '',
+    manualConfirmation: false,
+    requiresPayment: false,
+    autoAssignment: true,
+    manageCapacity: true,
+    maxBookingsPerSlot: 1,
+    assignedStaffIds: [] as string[],
+    assignedResourceIds: [] as string[],
   });
+
+  const [isPublished, setIsPublished] = useState(false);
+  const [shareLink, setShareLink] = useState('');
 
   // Schedule State
   const [workingHours, setWorkingHours] = useState(
@@ -66,13 +85,23 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
           title: data.title || '',
           description: data.description || '',
           duration: data.duration || 30,
-          price: data.price || 0,
+          price: data.price ? parseFloat(data.price) : 0,
           type: data.type || 'USER',
           location: data.location || '',
           color: data.color || '#C5A05C',
           introductoryMessage: data.introductoryMessage || '',
           confirmationMessage: data.confirmationMessage || '',
+          manualConfirmation: data.manualConfirmation || false,
+          requiresPayment: data.requiresPayment || false,
+          autoAssignment: data.autoAssignment ?? true,
+          manageCapacity: data.manageCapacity ?? true,
+          maxBookingsPerSlot: data.maxBookingsPerSlot || 1,
+          assignedStaffIds: data.hosts ? data.hosts.map((h: any) => h.id) : [],
+          assignedResourceIds: data.resources ? data.resources.map((r: any) => r.id) : [],
         });
+
+        setIsPublished(data.isPublished || false);
+        setShareLink(data.shareLink || '');
 
         // Populate Working Hours
         if (data.workingHours && data.workingHours.length > 0) {
@@ -122,6 +151,24 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
     }
   }, [dispatch, params.id]);
 
+  // Fetch Staff and Resources
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+      try {
+        const [staffRes, resourceRes] = await Promise.all([
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/staff`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/resources`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+        setStaffMembers(staffRes.data.data || []);
+        setResources(resourceRes.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch staff/resources:', error);
+      }
+    };
+    fetchData();
+  }, [token]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +188,21 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
       alert('Failed to update appointment type. Please check your inputs.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePublishToggle = async () => {
+    try {
+      if (isPublished) {
+        await dispatch(unpublishAppointmentType(params.id)).unwrap();
+        setIsPublished(false);
+      } else {
+        await dispatch(publishAppointmentType(params.id)).unwrap();
+        setIsPublished(true);
+      }
+    } catch (error) {
+      console.error('Failed to toggle publish status:', error);
+      alert('Failed to update publish status.');
     }
   };
 
@@ -180,17 +242,50 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-primary font-['Georgia']">Edit Appointment Type</h1>
-            <p className="text-muted-foreground">Modify your service details.</p>
+            <p className="text-muted-foreground flex items-center gap-2">
+              Modify your service details.
+              {isPublished && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                  Published
+                </span>
+              )}
+            </p>
           </div>
         </div>
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="metallic-gold-bg text-accent-foreground shadow-lg shadow-accent/20 min-w-[120px]"
-        >
-          {isLoading ? 'Saving...' : 'Save Changes'}
-          {!isLoading && <Save className="w-4 h-4 ml-2" />}
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* NEW: Meetings Button */}
+          <Link href={`/organizer/meetings?type=${params.id}`}>
+            <Button variant="outline">
+              Meetings
+            </Button>
+          </Link>
+
+          {isPublished ? (
+            <Button
+              variant="outline"
+              onClick={handlePublishToggle}
+              className="border-destructive text-destructive hover:bg-destructive/10"
+            >
+              <Lock className="w-4 h-4 mr-2" /> Unpublish
+            </Button>
+          ) : (
+            <Button
+              onClick={handlePublishToggle}
+              variant="outline"
+            >
+              <Globe className="w-4 h-4 mr-2" /> Publish
+            </Button>
+          )}
+
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="metallic-gold-bg text-accent-foreground shadow-lg shadow-accent/20 min-w-[120px]"
+          >
+            {isLoading ? 'Saving...' : 'Save Changes'}
+            {!isLoading && <Save className="w-4 h-4 ml-2" />}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -200,14 +295,14 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
             { id: 'general', label: 'General Info', icon: FileText },
             { id: 'schedule', label: 'Availability', icon: Calendar },
             { id: 'questions', label: 'Questions', icon: HelpCircle },
-            { id: 'options', label: 'Options/Policy', icon: Settings },
+            { id: 'options', label: 'Options & Policy', icon: Settings },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                  ? 'bg-primary/10 text-primary border-l-4 border-primary'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                 }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -255,6 +350,88 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         />
                       </div>
+
+                      {/* NEW: Book Type (User vs Resource) */}
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Book</label>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="bookType"
+                              className="accent-primary"
+                              checked={formData.type === 'USER'}
+                              onChange={() => setFormData({ ...formData, type: 'USER' })}
+                            />
+                            <Users className="w-4 h-4" />
+                            <span>User</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="bookType"
+                              className="accent-primary"
+                              checked={formData.type === 'RESOURCE'}
+                              onChange={() => setFormData({ ...formData, type: 'RESOURCE' })}
+                            />
+                            <Box className="w-4 h-4" />
+                            <span>Resources</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* HOST/RESOURCE SELECTION */}
+                      {formData.type === 'USER' ? (
+                        <div className="space-y-2">
+                          <MultiSelect
+                            label="Available Staff (Hosts)"
+                            placeholder="Select staff members..."
+                            options={staffMembers.map(s => ({ id: s.id, label: s.name, subLabel: s.email }))}
+                            selected={formData.assignedStaffIds}
+                            onChange={(selected) => setFormData({ ...formData, assignedStaffIds: selected })}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <MultiSelect
+                            label="Available Resources"
+                            placeholder="Select resources..."
+                            options={resources.map(r => ({ id: r.id, label: r.name, subLabel: r.description }))}
+                            selected={formData.assignedResourceIds}
+                            onChange={(selected) => setFormData({ ...formData, assignedResourceIds: selected })}
+                          />
+                        </div>
+                      )}
+
+                      {/* NEW: Assignment Type (Wireframe: Automatically vs By Visitor) */}
+                      {formData.type === 'USER' && (
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Assignment</label>
+                          <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="assignment"
+                                className="accent-primary"
+                                checked={formData.autoAssignment}
+                                onChange={() => setFormData({ ...formData, autoAssignment: true })}
+                              />
+                              <span>Automatically</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="assignment"
+                                className="accent-primary"
+                                checked={!formData.autoAssignment}
+                                onChange={() => setFormData({ ...formData, autoAssignment: false })}
+                              />
+                              <span>By visitor</span>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="text-sm font-medium mb-1 block">Duration (minutes)</label>
@@ -420,6 +597,35 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
                     </h2>
 
                     <div className="space-y-6">
+
+                      {/* NEW: Options Features (Manual Confirmation, Paid Booking) */}
+                      <div className="space-y-4">
+                        <h3 className="text-md font-medium border-b pb-2">Booking Settings</h3>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="manualConfirmation"
+                              checked={formData.manualConfirmation}
+                              onChange={(e) => setFormData({ ...formData, manualConfirmation: e.target.checked })}
+                              className="w-4 h-4 accent-primary"
+                            />
+                            <label htmlFor="manualConfirmation" className="text-sm">Manual confirmation required</label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="requiresPayment"
+                              checked={formData.requiresPayment}
+                              onChange={(e) => setFormData({ ...formData, requiresPayment: e.target.checked })}
+                              className="w-4 h-4 accent-primary"
+                            />
+                            <label htmlFor="requiresPayment" className="text-sm">Requires payment (Paid Booking)</label>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="space-y-4">
                         <h3 className="text-md font-medium border-b pb-2">Cancellation Policy</h3>
                         <div className="flex items-center gap-2">

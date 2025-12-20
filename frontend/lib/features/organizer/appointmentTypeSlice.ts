@@ -126,8 +126,31 @@ export const updateAppointmentType = createAsyncThunk(
       const response = await api.patch(`${API_URL}/${id}`, data);
       return response.data.appointmentType;
     } catch (error: any) {
-      // If we're updating questions/schedule, the backend effectively returns the new full object
+      return rejectWithValue(error.response?.data?.message || 'Failed to update appointment type');
+    }
+  }
+);
+
+export const publishAppointmentType = createAsyncThunk(
+  'appointmentType/publish',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`${API_URL}/${id}/publish`);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to publish appointment type');
+    }
+  }
+);
+
+export const unpublishAppointmentType = createAsyncThunk(
+  'appointmentType/unpublish',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`${API_URL}/${id}/unpublish`);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to unpublish appointment type');
     }
   }
 );
@@ -181,6 +204,19 @@ const appointmentTypeSlice = createSlice({
       })
       .addCase(deleteAppointmentType.fulfilled, (state, action) => {
         state.types = state.types.filter((t) => t.id !== action.payload);
+      })
+      .addCase(publishAppointmentType.fulfilled, (state, action) => {
+        const index = state.types.findIndex((t) => t.id === action.payload.id);
+        if (index !== -1) {
+          state.types[index].isPublished = true;
+          state.types[index].shareLink = action.payload.shareLink; // In case it gets regenerated
+        }
+      })
+      .addCase(unpublishAppointmentType.fulfilled, (state, action) => {
+        const index = state.types.findIndex((t) => t.id === action.payload.id);
+        if (index !== -1) {
+          state.types[index].isPublished = false;
+        }
       });
   },
 });

@@ -44,12 +44,13 @@ const createAppointmentType = async (organizerId, data) => {
   const id = crypto.randomUUID();
 
   // Create appointment type
+  // PATCH: Added "questions" column and value
   const appointmentTypeResult = await pool.query(
     `INSERT INTO "AppointmentType" 
       ("id", "title", "description", "duration", "type", "location", "meetingUrl", "introductoryMessage", "color", "maxBookingsPerSlot", 
        "manageCapacity", "requiresPayment", "price", "manualConfirmation", "autoAssignment", "minAdvanceBookingMinutes", 
-       "maxAdvanceBookingDays", "bufferTimeMinutes", "confirmationMessage", "isPublished", "shareLink", "organizerId", "createdAt", "updatedAt")
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, NOW(), NOW())
+       "maxAdvanceBookingDays", "bufferTimeMinutes", "confirmationMessage", "isPublished", "questions", "shareLink", "organizerId", "createdAt", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, NOW(), NOW())
      RETURNING *`,
     [
       id,
@@ -72,6 +73,7 @@ const createAppointmentType = async (organizerId, data) => {
       bufferTimeMinutes || 0,
       confirmationMessage || null,
       isPublished || false,
+      questions ? JSON.stringify(questions) : null,
       shareLink,
       organizerId,
     ]
@@ -434,6 +436,12 @@ const updateAppointmentType = async (organizerId, appointmentTypeId, data) => {
         ]
       );
     }
+
+    // PATCH: Also update JSON column for backward compatibility
+    await pool.query(
+      'UPDATE "AppointmentType" SET "questions" = $1, "updatedAt" = NOW() WHERE "id" = $2',
+      [JSON.stringify(questions), appointmentTypeId]
+    );
   }
 
   // Update cancellation policy
@@ -722,7 +730,7 @@ const addQuestion = async (organizerId, appointmentTypeId, questionData) => {
   );
 
   const question = questionResult.rows[0];
-  
+
   // Parse options JSON if exists
   if (question.options) {
     question.options = JSON.parse(question.options);

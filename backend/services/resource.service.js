@@ -1,6 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const { pool } = require('../config/db');
 const AppError = require('../utils/appError');
+const crypto = require('crypto');
 
 /**
  * Create a new resource
@@ -8,13 +9,33 @@ const AppError = require('../utils/appError');
 const createResource = async (organizerId, data) => {
   const { name, resourceType, description, location, capacity, imageUrl, workingHours } = data;
 
+  if (!name) {
+    throw new AppError('Resource name is required', StatusCodes.BAD_REQUEST);
+  }
+
+  // Ensure resourceType is valid or default to OTHER
+  const validTypes = ['STAFF_MEMBER', 'ROOM', 'EQUIPMENT', 'VEHICLE', 'OTHER'];
+  const typeToSave = validTypes.includes(resourceType) ? resourceType : 'OTHER';
+
+  // Generate ID manually
+  const newId = crypto.randomUUID();
+
   // Create resource
   const resourceResult = await pool.query(
     `INSERT INTO "Resource" 
-      ("name", "resourceType", "description", "location", "capacity", "imageUrl", "organizerId", "isActive", "createdAt", "updatedAt")
-     VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, NOW(), NOW())
+      ("id", "name", "resourceType", "description", "location", "capacity", "imageUrl", "organizerId", "isActive", "createdAt", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, NOW(), NOW())
      RETURNING *`,
-    [name, resourceType, description || null, location || null, capacity || 1, imageUrl || null, organizerId]
+    [
+      newId,
+      name,
+      typeToSave,
+      description || null,
+      location || null,
+      capacity || 1,
+      imageUrl || null,
+      organizerId
+    ]
   );
 
   const resource = resourceResult.rows[0];
@@ -52,6 +73,7 @@ const createResource = async (organizerId, data) => {
     organizerId: resource.organizerId,
     createdAt: resource.createdAt,
     updatedAt: resource.updatedAt,
+    workingHours: resource.workingHours || [], // Fixed property access to avoid undefined
   };
 };
 
