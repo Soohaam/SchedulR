@@ -278,7 +278,6 @@ model Resource {
 // ============================================
 // APPOINTMENT & BOOKING MODELS
 // ============================================
-
 model AppointmentType {
   id                 String   @id @default(uuid())
   title              String
@@ -307,6 +306,8 @@ model AppointmentType {
   maxAdvanceBookingDays    Int? @default(30)   // Max 30 days ahead
   bufferTimeMinutes        Int? @default(0)    // Gap between appointments
   
+  // Messages
+  introductoryMessage String?   // <--- NEW FIELD ADDED HERE
   confirmationMessage String?
   
   questions          Json?    // Keeping for backward compatibility
@@ -328,7 +329,6 @@ model AppointmentType {
   
   @@index([organizerId, isPublished])
 }
-
 model Booking {
   id                 String        @id @default(uuid())
   
