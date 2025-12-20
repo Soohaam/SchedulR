@@ -59,34 +59,46 @@ export default function RegisterForm() {
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="mb-8 flex justify-center">
-        <div className="bg-muted p-1 rounded-xl inline-flex relative">
-          <motion.div
-            className="absolute inset-y-1 bg-card shadow-sm rounded-lg"
-            initial={false}
-            animate={{
-              x: role === 'customer' ? 0 : '100%',
-              width: '50%'
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
-          <button
-            onClick={() => setRole('customer')}
-            className={`relative z-10 px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-              role === 'customer' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <User size={16} />
-            Customer
-          </button>
-          <button
-            onClick={() => setRole('organiser')}
-            className={`relative z-10 px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-              role === 'organiser' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Briefcase size={16} />
-            Organizer
-          </button>
+        <div className="bg-muted/50 p-1.5 rounded-xl inline-flex relative w-full max-w-[300px] border border-border/50 backdrop-blur-sm">
+          <div className="absolute inset-0 rounded-xl bg-muted/50" />
+          <div className="relative z-10 grid grid-cols-2 w-full gap-1">
+            <button
+              onClick={() => setRole('customer')}
+              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                role === 'customer' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {role === 'customer' && (
+                <motion.div
+                  layoutId="activeRole"
+                  className="absolute inset-0 bg-background shadow-sm rounded-lg border border-border/50"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-2">
+                <User size={16} />
+                Customer
+              </span>
+            </button>
+            <button
+              onClick={() => setRole('organiser')}
+              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                role === 'organiser' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {role === 'organiser' && (
+                <motion.div
+                  layoutId="activeRole"
+                  className="absolute inset-0 bg-background shadow-sm rounded-lg border border-border/50"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-2">
+                <Briefcase size={16} />
+                Organizer
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
