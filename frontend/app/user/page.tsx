@@ -23,7 +23,7 @@ export default function UserDashboard() {
 
     const handleLogout = () => {
         dispatch(logout());
-        router.push('/login');
+        router.replace('/login');
     };
 
     useEffect(() => {
@@ -33,28 +33,12 @@ export default function UserDashboard() {
         }
     }, [dispatch, searchQuery, isAuthenticated, user]);
 
-    // Redirect if not authenticated or wrong role
-    useEffect(() => {
-        if (isAuthenticated === false) {
-            router.replace('/login');
-        } else if (isAuthenticated && user && user.role !== 'CUSTOMER') {
-            const path = user.role === 'ORGANISER' ? '/organizer' : '/admin';
-            router.replace(path);
-        }
-    }, [isAuthenticated, user, router]);
-
-    // Show loading while auth is being checked
-    if (isAuthenticated === undefined || isAuthenticated === null) {
+    if (isLoading && appointments.length === 0) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent" />
             </div>
         );
-    }
-
-    // Don't render if not authenticated (will redirect)
-    if (!isAuthenticated || !user || user.role !== 'CUSTOMER') {
-        return null;
     }
 
     // Filter appointments based on search and type

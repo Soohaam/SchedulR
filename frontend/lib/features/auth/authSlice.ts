@@ -408,7 +408,8 @@ const authSlice = createSlice({
       .addCase(validateSession.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = true;
-        state.user = action.payload;
+        // Backend returns { user: {...} }, so we need to extract the user object
+        state.user = action.payload.user || action.payload;
       })
       .addCase(validateSession.rejected, (state) => {
         state.isLoading = false;

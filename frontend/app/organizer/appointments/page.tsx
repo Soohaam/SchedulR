@@ -137,7 +137,7 @@ export default function AppointmentTypesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="group relative"
             >
-              <Card className="p-6 bg-card border-border/50 shadow-sm hover:shadow-md transition-all border-l-4 border-l-primary flex flex-col md:flex-row items-center gap-6">
+              <Card className="p-6 bg-card border-border/50 shadow-sm hover:shadow-md transition-all border-l-4 border-l-primary flex flex-col md:flex-row items-start md:items-center gap-6">
                 {/* Left: Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
@@ -154,6 +154,12 @@ export default function AppointmentTypesPage() {
                       </div>
                     )}
                     <h3 className="text-lg font-semibold text-foreground truncate">{type.title || type.name}</h3>
+                    {/* Published Badge - Inline */}
+                    {type.isPublished && (
+                      <span className="ml-2 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border border-green-600/20 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded">
+                        Published
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-6 text-sm text-muted-foreground ml-15">
@@ -171,8 +177,8 @@ export default function AppointmentTypesPage() {
                   </div>
                 </div>
 
-                {/* Middle: Actions */}
-                <div className="flex items-center gap-3">
+                {/* Right: Actions */}
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
@@ -191,20 +197,13 @@ export default function AppointmentTypesPage() {
                     <Upload className="w-3 h-3 mr-2" />
                     Image
                   </Button>
-                  <Link href={`/organizer/appointments/${type.id}`}>
+                  <Link href={`/organizer/appointments/create?edit=${type.id}`}>
                     <Button variant="outline" size="sm" className="h-9">
                       <Edit className="w-3 h-3 mr-2" />
                       Edit
                     </Button>
                   </Link>
                 </div>
-
-                {/* Right: Status Badge */}
-                {type.isPublished && (
-                  <div className="absolute -top-3 -right-3 md:top-auto md:bottom-auto md:right-8 transform rotate-12 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border-2 border-green-600/20 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-sm shadow-sm pointer-events-none">
-                    Published
-                  </div>
-                )}
               </Card>
             </motion.div>
           ))

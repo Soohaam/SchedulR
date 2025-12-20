@@ -1,7 +1,15 @@
+'use client';
+
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+
 export default function UserLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    return <>{children}</>;
+    return (
+        <ProtectedRoute allowedRoles={['CUSTOMER']}>
+            {children}
+        </ProtectedRoute>
+    );
 }
