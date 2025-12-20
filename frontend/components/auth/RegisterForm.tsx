@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -35,6 +35,7 @@ export default function RegisterForm() {
     (state: RootState) => state.auth
   );
   const [role, setRole] = useState<'customer' | 'organiser'>('customer');
+  const hasRedirected = useRef(false);
 
   const {
     register,
@@ -46,21 +47,17 @@ export default function RegisterForm() {
   });
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      switch (user.role) {
-        case 'ORGANISER':
-          router.push('/organizer');
-          break;
-        case 'ADMIN':
-          router.push('/admin');
-          break;
-        case 'CUSTOMER':
-        default:
-          router.push('/dashboard');
-          break;
-      }
+    if (isAuthenticated && user && !hasRedirected.current) {
+      hasRedirected.current = true;
+      const redirectPath = user.role === 'ORGANISER'
+        ? '/organizer'
+        : user.role === 'ADMIN'
+          ? '/admin'
+          : '/user';
+
+      router.replace(redirectPath);
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user]);
 
   const onSubmit = (data: RegisterFormData) => {
     const { confirmPassword, ...userData } = data;
@@ -75,9 +72,8 @@ export default function RegisterForm() {
           <div className="relative z-10 grid grid-cols-2 w-full gap-1">
             <button
               onClick={() => setRole('customer')}
-              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                role === 'customer' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${role === 'customer' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               {role === 'customer' && (
                 <motion.div
@@ -93,9 +89,8 @@ export default function RegisterForm() {
             </button>
             <button
               onClick={() => setRole('organiser')}
-              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                role === 'organiser' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${role === 'organiser' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               {role === 'organiser' && (
                 <motion.div
@@ -136,7 +131,7 @@ export default function RegisterForm() {
             {...register('fullName')}
             className="bg-background"
           />
-          
+
           <Input
             label="Email address"
             type="email"

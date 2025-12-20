@@ -10,7 +10,7 @@ import { AppDispatch, RootState } from '../../lib/store';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const loginSchema = z.object({
@@ -26,6 +26,7 @@ export default function LoginForm() {
   const { isLoading, error, isAuthenticated, requiresTwoFactor, user } = useSelector(
     (state: RootState) => state.auth
   );
+  const hasRedirected = useRef(false);
 
   const {
     register,
@@ -36,21 +37,17 @@ export default function LoginForm() {
   });
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      switch (user.role) {
-        case 'ORGANISER':
-          router.push('/organizer');
-          break;
-        case 'ADMIN':
-          router.push('/admin');
-          break;
-        case 'CUSTOMER':
-        default:
-          router.push('/dashboard');
-          break;
-      }
+    if (isAuthenticated && user && !hasRedirected.current) {
+      hasRedirected.current = true;
+      const redirectPath = user.role === 'ORGANISER'
+        ? '/organizer'
+        : user.role === 'ADMIN'
+          ? '/admin'
+          : '/user';
+
+      router.replace(redirectPath);
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user]);
 
   const onSubmit = (data: LoginFormData) => {
     dispatch(loginUser(data));
@@ -75,7 +72,7 @@ export default function LoginForm() {
             </motion.div>
           )}
         </AnimatePresence>
-        
+
         <div className="space-y-4">
           <Input
             label="Email address"
@@ -96,7 +93,7 @@ export default function LoginForm() {
             {...register('password')}
             className="bg-background"
           />
-          
+
           <div className="flex justify-end">
             <Link href="/forgot-password" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
               Forgot password?

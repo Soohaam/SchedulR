@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './features/auth/authSlice';
 import organizerReducer from './features/organizer/organizerSlice';
 import appointmentTypeReducer from './features/organizer/appointmentTypeSlice';
+import customerReducer from './features/customer/customerSlice';
 
 export const makeStore = () => {
   return configureStore({
@@ -9,6 +10,7 @@ export const makeStore = () => {
       auth: authReducer,
       organizer: organizerReducer,
       appointmentType: appointmentTypeReducer,
+      customer: customerReducer,
     },
   });
 };

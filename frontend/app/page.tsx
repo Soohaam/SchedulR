@@ -1,5 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/store';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +12,22 @@ import Clock3D from '@/components/landing/Clock3D';
 import { Calendar, CheckCircle, BarChart3, Users, Clock, Shield } from 'lucide-react';
 
 export default function Home() {
+  const router = useRouter();
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    // Redirect authenticated users to their dashboard (only once)
+    if (isAuthenticated && user) {
+      const redirectPath = user.role === 'ORGANISER'
+        ? '/organizer'
+        : user.role === 'ADMIN'
+          ? '/admin'
+          : '/user';
+
+      router.replace(redirectPath);
+    }
+  }, [isAuthenticated, user, router]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -49,28 +69,28 @@ export default function Home() {
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 md:px-12 pt-8 md:pt-16 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[600px]">
           {/* Left Column: Text */}
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="space-y-8 max-w-2xl"
           >
-            <motion.h2 
+            <motion.h2
               variants={itemVariants}
               className="text-5xl md:text-7xl font-bold text-primary leading-[1.1] tracking-tight font-['Georgia']"
             >
               Booking Simplified. <br />
               <span className="metallic-gold-text">Schedule Smarter.</span>
             </motion.h2>
-            
-            <motion.p 
+
+            <motion.p
               variants={itemVariants}
               className="text-lg md:text-xl text-muted-foreground leading-relaxed font-light max-w-lg"
             >
               Experience intelligent scheduling with real-time availability, multi-provider coordination, and powerful automation designed for modern professionals.
             </motion.p>
-            
-            <motion.div 
+
+            <motion.div
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-4 pt-4"
             >
@@ -99,7 +119,7 @@ export default function Home() {
           </motion.div>
 
           {/* Right Column: 3D Clock */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -112,9 +132,9 @@ export default function Home() {
 
         {/* Below Hero Sections */}
         <div className="mt-24 space-y-24">
-          
+
           {/* Upcoming Appointments Preview */}
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -153,7 +173,7 @@ export default function Home() {
           </motion.section>
 
           {/* Calendar & Analytics Preview */}
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -181,7 +201,7 @@ export default function Home() {
                 ))}
               </ul>
             </div>
-            
+
             <div className="bg-card rounded-2xl shadow-2xl border border-border/50 p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-3xl"></div>
               <div className="space-y-6">
@@ -192,7 +212,7 @@ export default function Home() {
                 <div className="flex items-end justify-between gap-2 h-40">
                   {[40, 70, 45, 90, 60, 80, 50].map((h, i) => (
                     <div key={i} className="w-full bg-secondary rounded-t-lg relative group overflow-hidden">
-                      <div 
+                      <div
                         className="absolute bottom-0 left-0 right-0 bg-accent/80 transition-all duration-500 group-hover:bg-accent"
                         style={{ height: `${h}%` }}
                       ></div>
@@ -207,7 +227,7 @@ export default function Home() {
           </motion.section>
 
           {/* Feature Highlights */}
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
