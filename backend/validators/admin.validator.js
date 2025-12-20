@@ -69,8 +69,8 @@ const getAppointmentsQuerySchema = z.object({
         status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']).optional(),
         organizerId: z.string().uuid('Invalid organiser ID format').optional(),
         customerId: z.string().uuid('Invalid customer ID format').optional(),
-        startDate: z.string().datetime().optional(),
-        endDate: z.string().datetime().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
         page: z
             .string()
             .transform((val) => parseInt(val, 10))

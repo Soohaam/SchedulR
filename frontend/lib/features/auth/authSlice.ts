@@ -4,10 +4,11 @@ import api from '../../api';
 interface User {
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
+  fullName?: string;
+  firstName?: string | null;
+  lastName?: string | null;
   role: string;
-  isTwoFactorEnabled: boolean;
+  isTwoFactorEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -348,7 +349,8 @@ const authSlice = createSlice({
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = true;
-        state.user = action.payload;
+        // Backend returns { user: {...} }, so we need to extract the user object
+        state.user = action.payload.user || action.payload;
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.isLoading = false;

@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiSelect } from '@/components/ui/MultiSelect';
-import { ArrowLeft, Save, Calendar, HelpCircle, Settings, FileText, Clock, Plus, Trash2, Globe, Lock, Users, Box } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, HelpCircle, Settings, FileText, Clock, Plus, Trash2, Globe, Lock, Users, Box, Upload, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -75,6 +75,11 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
     noShowPolicy: '',
   });
 
+  // Image Upload State
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -138,6 +143,11 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
           });
         }
 
+        // Set profile image if exists
+        if (data.profileImage) {
+          setProfileImage(data.profileImage);
+        }
+
       } catch (error) {
         console.error('Failed to load appointment type:', error);
         alert('Failed to load appointment type details.');
@@ -168,6 +178,76 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
     };
     fetchData();
   }, [token]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedFile) return;
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/appointment-types/${params.id}/upload-image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+      setProfileImage(data.profileImage);
+      setSelectedFile(null);
+      alert('Image uploaded successfully!');
+    } catch (error) {
+      console.error('Image upload error:', error);
+      alert('Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleImageDelete = async () => {
+    if (!profileImage) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/appointment-types/${params.id}/image`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Delete failed');
+
+      setProfileImage(null);
+      setSelectedFile(null);
+      alert('Image deleted successfully!');
+    } catch (error) {
+      console.error('Image delete error:', error);
+      alert('Failed to delete image');
+    }
+  };
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -465,6 +545,81 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
                           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                           className="max-w-md"
                         />
+                      </div>
+
+                      {/* Profile Image Upload */}
+                      <div className="pt-4 border-t border-border">
+                        <label className="text-sm font-medium mb-3 block">Profile Image</label>
+                        <div className="flex items-start gap-6">
+                          {/* Image Preview */}
+                          <div className="flex-shrink-0">
+                            {profileImage ? (
+                              <div className="relative group">
+                                <img
+                                  src={profileImage}
+                                  alt="Profile"
+                                  className="w-32 h-32 rounded-lg object-cover border-2 border-border"
+                                />
+                                <button
+                                  onClick={handleImageDelete}
+                                  className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="w-32 h-32 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-secondary/20">
+                                <ImageIcon className="w-12 h-12 text-muted-foreground/40" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Upload Controls */}
+                          <div className="flex-1 space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Upload an image for your appointment type. Max size: 5MB. Supported formats: JPG, PNG, GIF, WEBP
+                            </p>
+                            <div className="flex gap-2">
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleImageSelect}
+                                  className="hidden"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-2"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
+                                  }}
+                                >
+                                  <Upload className="w-4 h-4" />
+                                  Choose Image
+                                </Button>
+                              </label>
+                              {selectedFile && (
+                                <Button
+                                  type="button"
+                                  onClick={handleImageUpload}
+                                  disabled={isUploadingImage}
+                                  size="sm"
+                                  className="bg-accent text-accent-foreground"
+                                >
+                                  {isUploadingImage ? 'Uploading...' : 'Upload'}
+                                </Button>
+                              )}
+                            </div>
+                            {selectedFile && !isUploadingImage && (
+                              <p className="text-xs text-accent">
+                                Selected: {selectedFile.name} - Click "Upload" to save
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

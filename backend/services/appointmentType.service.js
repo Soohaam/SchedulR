@@ -2,6 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 const crypto = require('crypto');
 const { pool } = require('../config/db');
 const AppError = require('../utils/appError');
+const { uploadImageFromBuffer, deleteImage } = require('../config/cloudinary');
 
 /**
  * Generate unique share link for appointment type
@@ -210,7 +211,7 @@ const listAppointmentTypes = async (organizerId, filters) => {
 
   // Get paginated data
   const dataResult = await pool.query(
-    `SELECT "id", "title", "description", "duration", "type", "location", "price", "isPublished", "shareLink", "createdAt", "updatedAt"
+    `SELECT "id", "title", "description", "duration", "type", "location", "price", "profileImage", "isPublished", "shareLink", "createdAt", "updatedAt"
      FROM "AppointmentType"
      WHERE ${whereClause}
      ORDER BY "createdAt" DESC
@@ -337,6 +338,7 @@ const getAppointmentTypeById = async (organizerId, appointmentTypeId) => {
     meetingUrl: appointmentType.meetingUrl,
     introductoryMessage: appointmentType.introductoryMessage,
     color: appointmentType.color,
+    profileImage: appointmentType.profileImage,
     maxBookingsPerSlot: appointmentType.maxBookingsPerSlot,
     manageCapacity: appointmentType.manageCapacity,
     requiresPayment: appointmentType.requiresPayment,
@@ -923,6 +925,68 @@ const reorderQuestions = async (organizerId, appointmentTypeId, questionIds) => 
   };
 };
 
+/**
+ * Upload profile image for appointment type
+ */
+const uploadAppointmentImage = async (organizerId, appointmentTypeId, imageBuffer) => {
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  // Upload new image to Cloudinary
+  const uploadResult = await uploadImageFromBuffer(imageBuffer, 'appointment-types');
+
+  // Update appointment type with new image URL
+  const updateResult = await pool.query(
+    'UPDATE "AppointmentType" SET "profileImage" = $1, "updatedAt" = NOW() WHERE "id" = $2 RETURNING *',
+    [uploadResult.url, appointmentTypeId]
+  );
+
+  return {
+    id: updateResult.rows[0].id,
+    title: updateResult.rows[0].title,
+    profileImage: updateResult.rows[0].profileImage,
+    message: 'Image uploaded successfully',
+  };
+};
+
+/**
+ * Delete profile image for appointment type
+ */
+const deleteAppointmentImage = async (organizerId, appointmentTypeId) => {
+  // Verify appointment type exists and belongs to organiser
+  const appointmentTypeResult = await pool.query(
+    'SELECT * FROM "AppointmentType" WHERE "id" = $1 AND "organizerId" = $2',
+    [appointmentTypeId, organizerId]
+  );
+
+  if (appointmentTypeResult.rows.length === 0) {
+    throw new AppError('Appointment type not found or access denied', StatusCodes.NOT_FOUND);
+  }
+
+  const appointmentType = appointmentTypeResult.rows[0];
+
+  if (!appointmentType.profileImage) {
+    throw new AppError('No image to delete', StatusCodes.BAD_REQUEST);
+  }
+
+  // Update appointment type to remove image
+  await pool.query(
+    'UPDATE "AppointmentType" SET "profileImage" = NULL, "updatedAt" = NOW() WHERE "id" = $1',
+    [appointmentTypeId]
+  );
+
+  return {
+    message: 'Image deleted successfully',
+  };
+};
+
 module.exports = {
   createAppointmentType,
   listAppointmentTypes,
@@ -938,4 +1002,6 @@ module.exports = {
   updateQuestion,
   deleteQuestion,
   reorderQuestions,
+  uploadAppointmentImage,
+  deleteAppointmentImage,
 };
