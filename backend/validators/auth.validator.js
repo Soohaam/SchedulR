@@ -21,12 +21,21 @@ const fullNameSchema = z
   .min(1, 'Full name is required')
   .max(100, 'Full name must be at most 100 characters long');
 
+const phoneSchema = z
+  .string()
+  .trim()
+  .min(10, 'Phone number must be at least 10 digits')
+  .max(15, 'Phone number must be at most 15 digits')
+  .regex(/^\+?[0-9]+$/, 'Phone number must contain only digits and optional + prefix')
+  .optional();
+
 // Customer registration schema
 const registerCustomerSchema = z.object({
   body: z.object({
     email: emailSchema,
     password: passwordSchema,
     fullName: fullNameSchema,
+    phone: phoneSchema,
   }),
 });
 
@@ -36,6 +45,7 @@ const registerOrganiserSchema = z.object({
     email: emailSchema,
     password: passwordSchema,
     fullName: fullNameSchema,
+    phone: phoneSchema,
   }),
 });
 

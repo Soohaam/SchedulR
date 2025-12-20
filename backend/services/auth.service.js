@@ -30,7 +30,7 @@ const generateRandomCode = () => {
 /**
  * Register a new customer user
  */
-const registerCustomer = async ({ email, password, fullName }) => {
+const registerCustomer = async ({ email, password, fullName, phone }) => {
   const normalizedEmail = email.toLowerCase();
 
   const existingUserResult = await pool.query(
@@ -49,14 +49,15 @@ const registerCustomer = async ({ email, password, fullName }) => {
 
   const userRecordResult = await pool.query(
     `INSERT INTO "User" (
-      "id", "email", "password", "fullName", "role", 
-      "isActive", "isVerified", "isEmailVerified", 
+      "id", "email", "password", "fullName", "phone", "role", 
+      "timezone", "isActive", "isVerified", "isEmailVerified", 
       "emailVerificationToken", "emailVerificationExpires", 
+      "emailNotifications", "smsNotifications", "loginCount",
       "createdAt", "updatedAt"
     )
-    VALUES (gen_random_uuid(), $1, $2, $3, $4, TRUE, FALSE, FALSE, $5, $6, NOW(), NOW())
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'UTC', TRUE, FALSE, FALSE, $6, $7, TRUE, FALSE, 0, NOW(), NOW())
     RETURNING *`,
-    [normalizedEmail, passwordHash, fullName.trim(), 'CUSTOMER', verificationCode, verificationExpires]
+    [normalizedEmail, passwordHash, fullName.trim(), phone || null, 'CUSTOMER', verificationCode, verificationExpires]
   );
   const userRecord = userRecordResult.rows[0];
 
@@ -77,7 +78,7 @@ const registerCustomer = async ({ email, password, fullName }) => {
 /**
  * Register a new organiser user
  */
-const registerOrganiser = async ({ email, password, fullName }) => {
+const registerOrganiser = async ({ email, password, fullName, phone }) => {
   const normalizedEmail = email.toLowerCase();
 
   const existingUserResult = await pool.query(
@@ -96,14 +97,15 @@ const registerOrganiser = async ({ email, password, fullName }) => {
 
   const userRecordResult = await pool.query(
     `INSERT INTO "User" (
-      "id", "email", "password", "fullName", "role", 
-      "isActive", "isVerified", "isEmailVerified", 
+      "id", "email", "password", "fullName", "phone", "role", 
+      "timezone", "isActive", "isVerified", "isEmailVerified", 
       "emailVerificationToken", "emailVerificationExpires", 
+      "emailNotifications", "smsNotifications", "loginCount",
       "createdAt", "updatedAt"
     )
-    VALUES (gen_random_uuid(), $1, $2, $3, $4, TRUE, FALSE, FALSE, $5, $6, NOW(), NOW())
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'UTC', TRUE, FALSE, FALSE, $6, $7, TRUE, FALSE, 0, NOW(), NOW())
     RETURNING *`,
-    [normalizedEmail, passwordHash, fullName.trim(), 'ORGANISER', verificationCode, verificationExpires]
+    [normalizedEmail, passwordHash, fullName.trim(), phone || null, 'ORGANISER', verificationCode, verificationExpires]
   );
   const userRecord = userRecordResult.rows[0];
 
@@ -197,11 +199,21 @@ const login = async ({ email, password }) => {
     throw new AppError('Email not verified. Please verify your email first.', StatusCodes.FORBIDDEN);
   }
 
-  const accessToken = generateAccessToken(user.id, user.role);
+  // Update login tracking
+  const updatedUserResult = await pool.query(
+    `UPDATE "User" 
+     SET "loginCount" = "loginCount" + 1, "lastLoginAt" = NOW(), "updatedAt" = NOW()
+     WHERE "id" = $1
+     RETURNING *`,
+    [user.id]
+  );
+  const updatedUser = updatedUserResult.rows[0];
+
+  const accessToken = generateAccessToken(updatedUser.id, updatedUser.role);
 
   return {
     message: 'Login successful',
-    user: toPublicUser(user),
+    user: toPublicUser(updatedUser),
     accessToken,
   };
 };

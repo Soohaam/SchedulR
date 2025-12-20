@@ -11,7 +11,9 @@ datasource db {
   // url      = env("DATABASE_URL")
 }
 
-// --- ENUMS ---
+// ============================================
+// ENUMS
+// ============================================
 
 enum UserRole {
   CUSTOMER
@@ -20,8 +22,8 @@ enum UserRole {
 }
 
 enum AppointmentResourceType {
-  USER
-  RESOURCE
+  USER          // Internal staff/provider
+  RESOURCE      // Physical resource
 }
 
 enum BookingStatus {
@@ -43,13 +45,93 @@ enum PaymentProvider {
   RAZORPAY
 }
 
-// --- MODELS ---
+enum BookingAction {
+  CREATED
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+  COMPLETED
+  PAYMENT_RECEIVED
+  REFUND_PROCESSED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_REMINDER
+  BOOKING_CANCELLED
+  BOOKING_RESCHEDULED
+  MANUAL_CONFIRMATION_REQUEST
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  OTP_VERIFICATION
+  PASSWORD_RESET
+  WELCOME
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+}
+
+enum QuestionType {
+  SHORT_TEXT
+  LONG_TEXT
+  MULTIPLE_CHOICE
+  CHECKBOXES
+  DROPDOWN
+  YES_NO
+  DATE
+  NUMBER
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  DATE
+}
+
+enum ReportType {
+  BOOKING_SUMMARY
+  REVENUE_REPORT
+  UTILIZATION_REPORT
+  CUSTOMER_REPORT
+  PEAK_HOURS_ANALYSIS
+  CUSTOM
+}
+
+enum ResourceType {
+  STAFF_MEMBER      // Internal user who provides service
+  ROOM              // Physical room
+  EQUIPMENT         // Equipment/tools
+  VEHICLE           // Vehicle
+  OTHER             // Other resources
+}
+
+// ============================================
+// CORE MODELS - AUTHENTICATION USERS
+// ============================================
 
 model User {
   id         String   @id @default(uuid())
   email      String   @unique
   password   String
   fullName   String
+  phone      String?
+  profileImage String?
+  timezone   String?  @default("UTC")
+  
   role       UserRole @default(CUSTOMER)
   isActive   Boolean  @default(true)
   
@@ -63,18 +145,37 @@ model User {
   emailVerificationToken   String?
   emailVerificationExpires DateTime?
   
-  // Relations
+  // Activity tracking
+  lastLoginAt      DateTime?
+  loginCount       Int       @default(0)
+  
+  // Preferences
+  emailNotifications Boolean @default(true)
+  smsNotifications   Boolean @default(false)
+  
+  // Relations - Only for ORGANISER and ADMIN roles
   createdServices     AppointmentType[]    @relation("OrganizerServices")
-  ownedResources      Resource[]           @relation("OrganizerResources")
+  createdResources    Resource[]           @relation("OrganizerResources")
+  createdStaffMembers StaffMember[]        @relation("OrganizerStaff")
+  
+  // Relations - Only for CUSTOMER role
   bookings            Booking[]            @relation("CustomerBookings")
+  
+  // Common relations
   twoFactorSessions   TwoFactorSession[]
-  passwordResetTokens PasswordResetToken[] // NEW: Relation for forgot password
+  passwordResetTokens PasswordResetToken[]
+  notifications       Notification[]
+  reviews             Review[]             @relation("CustomerReviews")
+  reports             Report[]
+  performedHistories  BookingHistory[]     @relation("PerformedBy")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@index([email])
+  @@index([role, isActive])
 }
 
-// NEW: Password Reset Token Model
 model PasswordResetToken {
   id        String   @id @default(uuid())
   
@@ -95,24 +196,88 @@ model TwoFactorSession {
   
   tokenHash String   @unique
   expiresAt DateTime
+  
+  createdAt DateTime @default(now())
 }
 
-model Resource {
+// ============================================
+// INTERNAL STAFF & RESOURCES (NON-LOGIN USERS)
+// ============================================
+
+// StaffMember: Internal users who provide services (doctors, consultants, etc.)
+// These are NOT login users, just profiles created by Organiser
+model StaffMember {
   id            String   @id @default(uuid())
+  
+  // Basic Info - ONLY name and email required
   name          String
-  email         String?  
-  description   String?
+  email         String
+  
+  // Optional fields
+  phone         String?
+  description   String?   // Bio, specialization, etc.
+  profileImage  String?
+  title         String?   // "Dr.", "Prof.", etc.
+  specialization String?  // "Cardiologist", "Yoga Instructor"
+  
   isActive      Boolean  @default(true)
   
+  // Created by Organiser
   organizerId   String
-  organizer     User     @relation("OrganizerResources", fields: [organizerId], references: [id])
+  organizer     User     @relation("OrganizerStaff", fields: [organizerId], references: [id])
   
-  workingHours  Json     
+  // Working schedule stored as JSON for flexibility
+  workingHours  Json?    // Keeping for backward compatibility
+  
+  // Relations
   bookings      Booking[]
+  workingHoursSchedule WorkingHours[]
+  slots         BookingSlot[]
+  exceptions    AvailabilityException[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  
+  @@unique([organizerId, email]) // Same email can exist for different organisers
+  @@index([organizerId, isActive])
 }
+
+// Resource: Physical resources like rooms, equipment, vehicles
+model Resource {
+  id            String       @id @default(uuid())
+  
+  name          String
+  resourceType  ResourceType @default(OTHER)
+  
+  // Optional fields
+  description   String?
+  location      String?
+  capacity      Int?         @default(1)
+  imageUrl      String?
+  
+  isActive      Boolean      @default(true)
+  
+  // Created by Organiser
+  organizerId   String
+  organizer     User         @relation("OrganizerResources", fields: [organizerId], references: [id])
+  
+  workingHours  Json?        // Keeping for backward compatibility
+  
+  // Relations
+  bookings      Booking[]
+  workingHoursSchedule WorkingHours[]
+  slots         BookingSlot[]
+  exceptions    AvailabilityException[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([organizerId, isActive])
+}
+
+// ============================================
+// APPOINTMENT & BOOKING MODELS
+// ============================================
 
 model AppointmentType {
   id                 String   @id @default(uuid())
@@ -120,6 +285,10 @@ model AppointmentType {
   description        String?
   duration           Int      // in minutes
   type               AppointmentResourceType 
+  
+  location           String?  // Physical address or "Online"
+  meetingUrl         String?  // For virtual appointments
+  color              String?  @default("#3B82F6")
   
   isPublished        Boolean  @default(false)
   shareLink          String?  @unique
@@ -133,15 +302,31 @@ model AppointmentType {
   manualConfirmation Boolean  @default(false)
   autoAssignment     Boolean  @default(true)
   
-  questions          Json?    
+  // Booking window constraints
+  minAdvanceBookingMinutes Int? @default(120)  // Min 2 hours advance
+  maxAdvanceBookingDays    Int? @default(30)   // Max 30 days ahead
+  bufferTimeMinutes        Int? @default(0)    // Gap between appointments
   
+  confirmationMessage String?
+  
+  questions          Json?    // Keeping for backward compatibility
+  
+  // Created by Organiser
   organizerId        String
   organizer          User     @relation("OrganizerServices", fields: [organizerId], references: [id])
   
+  // Relations
   bookings           Booking[]
+  questionsStructured Question[]
+  cancellationPolicy CancellationPolicy?
+  workingHours       WorkingHours[]
+  slots              BookingSlot[]
+  exceptions         AvailabilityException[]
   
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  
+  @@index([organizerId, isPublished])
 }
 
 model Booking {
@@ -150,8 +335,13 @@ model Booking {
   appointmentTypeId  String
   appointmentType    AppointmentType @relation(fields: [appointmentTypeId], references: [id])
   
+  // Customer who booked (login user with CUSTOMER role)
   customerId         String
   customer           User          @relation("CustomerBookings", fields: [customerId], references: [id])
+  
+  // Assigned staff member (non-login internal user) OR physical resource
+  staffMemberId      String?
+  staffMember        StaffMember?  @relation(fields: [staffMemberId], references: [id])
   
   resourceId         String?
   resource           Resource?     @relation(fields: [resourceId], references: [id])
@@ -163,15 +353,35 @@ model Booking {
   status             BookingStatus @default(PENDING)
   capacity           Int           @default(1) 
   
+  // Denormalized fields for quick access
+  customerEmail      String?
+  customerPhone      String?
+  venue              String?
+  notes              String?
+  
+  // Cancellation tracking
+  cancellationReason String?
+  cancelledBy        String?  // userId who cancelled
+  cancelledAt        DateTime?
+  
+  reminderSentAt     DateTime? // Track if reminder sent
+  
   answers            Json?         
   confirmationMessage String?
   
+  // Relations
   payment            Payment?
+  histories          BookingHistory[]
+  notifications      Notification[]
+  review             Review?
   
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
   @@index([appointmentTypeId, date, status]) 
+  @@index([customerId, status])
+  @@index([staffMemberId, startTime])
+  @@index([resourceId, startTime])
 }
 
 model Payment {
@@ -179,10 +389,22 @@ model Payment {
   amount                Decimal         @db.Decimal(10, 2)
   currency              String          @default("USD")
   provider              PaymentProvider
+  paymentMethod         String?         // "card", "upi", "netbanking"
   
   providerTransactionId String?         @unique 
   
   status                PaymentStatus   @default(PENDING)
+  
+  // Refund tracking
+  refundAmount          Decimal?        @db.Decimal(10, 2)
+  refundReason          String?
+  refundedAt            DateTime?
+  
+  failureReason         String?
+  
+  receiptUrl            String?
+  invoiceUrl            String?
+  
   metadata              Json?           
   
   bookingId             String          @unique
@@ -190,4 +412,278 @@ model Payment {
   
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+}
+
+// ============================================
+// SCHEDULING & AVAILABILITY MODELS
+// ============================================
+
+model WorkingHours {
+  id          String   @id @default(uuid())
+  
+  // Can be linked to StaffMember, Resource, or AppointmentType
+  staffMemberId String?
+  staffMember   StaffMember? @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  
+  resourceId  String?
+  resource    Resource? @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  appointmentTypeId String?
+  appointmentType   AppointmentType? @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
+  
+  dayOfWeek   Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  isWorking   Boolean  @default(true)
+  startTime   String   // "09:00"
+  endTime     String   // "17:00"
+  
+  // Break times (optional)
+  breakStart  String?  // "13:00"
+  breakEnd    String?  // "14:00"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([staffMemberId, dayOfWeek])
+  @@unique([resourceId, dayOfWeek])
+  @@unique([appointmentTypeId, dayOfWeek])
+  @@index([staffMemberId])
+  @@index([resourceId])
+  @@index([appointmentTypeId])
+}
+
+model AvailabilityException {
+  id          String   @id @default(uuid())
+  
+  // Can be for StaffMember, Resource, or AppointmentType
+  staffMemberId String?
+  staffMember   StaffMember? @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  
+  resourceId  String?
+  resource    Resource? @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  appointmentTypeId String?
+  appointmentType   AppointmentType? @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
+  
+  date        DateTime @db.Date
+  isAvailable Boolean  @default(false) // false = closed, true = special hours
+  
+  startTime   String?  // If special hours
+  endTime     String?
+  
+  reason      String?  // "Holiday", "Maintenance", etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([staffMemberId, date])
+  @@index([resourceId, date])
+  @@index([appointmentTypeId, date])
+}
+
+model BookingSlot {
+  id                String   @id @default(uuid())
+  
+  appointmentTypeId String
+  appointmentType   AppointmentType @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
+  
+  // Can be assigned to StaffMember or Resource
+  staffMemberId     String?
+  staffMember       StaffMember? @relation(fields: [staffMemberId], references: [id])
+  
+  resourceId        String?
+  resource          Resource? @relation(fields: [resourceId], references: [id])
+  
+  date              DateTime @db.Date
+  startTime         DateTime
+  endTime           DateTime
+  
+  maxCapacity       Int      @default(1)
+  bookedCapacity    Int      @default(0)
+  
+  isAvailable       Boolean  @default(true)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([appointmentTypeId, staffMemberId, startTime])
+  @@unique([appointmentTypeId, resourceId, startTime])
+  @@index([appointmentTypeId, date, isAvailable])
+}
+
+// ============================================
+// QUESTIONS & POLICIES
+// ============================================
+
+model Question {
+  id                String   @id @default(uuid())
+  
+  appointmentTypeId String
+  appointmentType   AppointmentType @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
+  
+  questionText      String
+  questionType      QuestionType
+  
+  options           Json?    // For multiple choice, dropdown, checkboxes
+  isRequired        Boolean  @default(false)
+  order             Int      @default(0)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([appointmentTypeId, order])
+}
+
+model CancellationPolicy {
+  id                  String   @id @default(uuid())
+  
+  appointmentTypeId   String   @unique
+  appointmentType     AppointmentType @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
+  
+  allowCancellation   Boolean  @default(true)
+  
+  // How many hours before appointment can be cancelled
+  cancellationDeadlineHours Int @default(24)
+  
+  refundPercentage    Int      @default(100) // 0-100
+  cancellationFee     Decimal? @db.Decimal(10, 2)
+  
+  noShowPolicy        String?  // Description
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ============================================
+// TRACKING & AUDIT MODELS
+// ============================================
+
+model BookingHistory {
+  id          String   @id @default(uuid())
+  
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  action      BookingAction
+  
+  oldStatus   BookingStatus?
+  newStatus   BookingStatus?
+  
+  oldStartTime DateTime?
+  newStartTime DateTime?
+  
+  performedBy String   // userId who performed the action
+  performedByUser User @relation("PerformedBy", fields: [performedBy], references: [id])
+  
+  reason      String?  // Cancellation/change reason
+  
+  metadata    Json?    // Additional info
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([bookingId])
+  @@index([performedBy])
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        NotificationType
+  channel     NotificationChannel
+  
+  subject     String?
+  message     String
+  
+  // For email/SMS tracking
+  recipient   String           // email or phone
+  status      NotificationStatus @default(PENDING)
+  sentAt      DateTime?
+  
+  // Link to related entity
+  bookingId   String?
+  booking     Booking?         @relation(fields: [bookingId], references: [id])
+  
+  metadata    Json?
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  @@index([userId, status])
+  @@index([bookingId])
+}
+
+// ============================================
+// FEEDBACK & REVIEWS
+// ============================================
+
+model Review {
+  id                String   @id @default(uuid())
+  
+  bookingId         String   @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id])
+  
+  customerId        String
+  customer          User     @relation("CustomerReviews", fields: [customerId], references: [id])
+  
+  rating            Int      // 1-5 stars
+  comment           String?
+  
+  organizerResponse String?
+  respondedAt       DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([customerId])
+  @@index([rating])
+}
+
+// ============================================
+// SYSTEM CONFIGURATION
+// ============================================
+
+model SystemSettings {
+  id              String   @id @default(uuid())
+  
+  key             String   @unique  // e.g., "app_name", "primary_color"
+  value           String
+  valueType       SettingType @default(STRING)
+  
+  category        String?  // "general", "email", "payment", "booking"
+  description     String?
+  
+  isPublic        Boolean  @default(false) // Can customers see it?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([category])
+}
+
+// ============================================
+// ANALYTICS & REPORTS
+// ============================================
+
+model Report {
+  id          String       @id @default(uuid())
+  
+  generatedBy String
+  user        User         @relation(fields: [generatedBy], references: [id])
+  
+  reportType  ReportType
+  
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  filters     Json?        // Store filter criteria
+  data        Json?        // Store computed results
+  
+  fileUrl     String?      // If exported as PDF/CSV
+  
+  createdAt   DateTime     @default(now())
+  
+  @@index([generatedBy])
+  @@index([reportType])
 }
