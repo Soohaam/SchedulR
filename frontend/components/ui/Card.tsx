@@ -1,11 +1,12 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
   className,
 }) => {
   return (
-    <div className={`bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 ${className}`}>
+    <div className={cn("bg-card text-card-foreground py-8 px-4 shadow-sm border border-border sm:rounded-xl sm:px-10", className)}>
       {children}
     </div>
   );

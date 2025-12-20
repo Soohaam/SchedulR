@@ -41,9 +41,13 @@ const initialState: AuthState = {
 
 export const registerUser = createAsyncThunk(
   'auth/register',
-  async (userData: any, { rejectWithValue }) => {
+  async ({ role, ...userData }: any, { rejectWithValue }) => {
     try {
-      const response = await api.post('/api/v1/auth/register', userData);
+      const endpoint = role === 'organiser' 
+        ? '/api/v1/auth/register/organiser' 
+        : '/api/v1/auth/register/customer';
+        
+      const response = await api.post(endpoint, userData);
       // If registration returns accessToken immediately (old behavior), store it
       if (response.data.accessToken) {
         localStorage.setItem('token', response.data.accessToken);

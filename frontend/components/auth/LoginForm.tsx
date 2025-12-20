@@ -10,10 +10,11 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -48,32 +49,58 @@ export default function LoginForm() {
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-          {error}
+    <div className="w-full max-w-md mx-auto">
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm"
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <div className="space-y-4">
+          <Input
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            placeholder="name@example.com"
+            error={errors.email?.message}
+            {...register('email')}
+            className="bg-background"
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            error={errors.password?.message}
+            {...register('password')}
+            className="bg-background"
+          />
         </div>
-      )}
-      
-      <Input
-        label="Email address"
-        type="email"
-        autoComplete="email"
-        error={errors.email?.message}
-        {...register('email')}
-      />
 
-      <Input
-        label="Password"
-        type="password"
-        autoComplete="current-password"
-        error={errors.password?.message}
-        {...register('password')}
-      />
-
-      <Button type="submit" isLoading={isLoading}>
-        Sign in
-      </Button>
-    </form>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11 text-base shadow-lg shadow-accent/20 transition-all hover:scale-[1.02]"
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              Signing in...
+            </div>
+          ) : (
+            'Sign in'
+          )}
+        </Button>
+      </form>
+    </div>
   );
 }
