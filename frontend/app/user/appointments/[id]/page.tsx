@@ -284,9 +284,9 @@ export default function AppointmentDetailPage() {
                                 className="mt-8 flex justify-center"
                             >
                                 <Button
-                                    onClick={handleBooking}
-                                    size="lg"
-                                    className="bg-accent text-accent-foreground hover:bg-accent/90 px-12 py-6 text-lg shadow-xl shadow-accent/20"
+                                    disabled={!selectedProvider}
+                                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                                    onClick={() => router.push(`/user/appointments/${appointmentId}/book`)}
                                 >
                                     <Calendar className="w-5 h-5 mr-2" />
                                     Continue to Book

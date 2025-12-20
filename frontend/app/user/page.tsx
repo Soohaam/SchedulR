@@ -7,7 +7,7 @@ import { AppDispatch, RootState } from '@/lib/store';
 import { fetchAvailableAppointments } from '@/lib/features/customer/customerSlice';
 import { logout } from '@/lib/features/auth/authSlice';
 import { motion } from 'framer-motion';
-import { Search, Filter, Calendar, MapPin, Clock, User, LogOut } from 'lucide-react';
+import { Search, Filter, Calendar, MapPin, Clock, User, LogOut, DollarSign } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -15,7 +15,7 @@ import { Card } from '@/components/ui/Card';
 export default function UserDashboard() {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
-    const { user } = useSelector((state: RootState) => state.auth);
+    const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
     const { appointments, isLoading } = useSelector((state: RootState) => state.customer);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -28,8 +28,34 @@ export default function UserDashboard() {
 
     useEffect(() => {
         // Fetch appointments on mount and when search changes
-        dispatch(fetchAvailableAppointments({ search: searchQuery }));
-    }, [dispatch, searchQuery]);
+        if (isAuthenticated && user?.role === 'CUSTOMER') {
+            dispatch(fetchAvailableAppointments({ search: searchQuery }));
+        }
+    }, [dispatch, searchQuery, isAuthenticated, user]);
+
+    // Redirect if not authenticated or wrong role
+    useEffect(() => {
+        if (isAuthenticated === false) {
+            router.replace('/login');
+        } else if (isAuthenticated && user && user.role !== 'CUSTOMER') {
+            const path = user.role === 'ORGANISER' ? '/organizer' : '/admin';
+            router.replace(path);
+        }
+    }, [isAuthenticated, user, router]);
+
+    // Show loading while auth is being checked
+    if (isAuthenticated === undefined || isAuthenticated === null) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+            </div>
+        );
+    }
+
+    // Don't render if not authenticated (will redirect)
+    if (!isAuthenticated || !user || user.role !== 'CUSTOMER') {
+        return null;
+    }
 
     // Filter appointments based on search and type
     const filteredAppointments = appointments.filter(apt => {
@@ -138,7 +164,7 @@ export default function UserDashboard() {
                 </div>
 
                 {/* Appointments Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredAppointments.map((appointment, index) => (
                         <motion.div
                             key={appointment.id}
@@ -147,62 +173,78 @@ export default function UserDashboard() {
                             transition={{ duration: 0.3, delay: index * 0.05 }}
                         >
                             <Card
-                                className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden bg-card/80 backdrop-blur-sm border-border/50"
+                                className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 h-full flex flex-col"
                                 onClick={() => handleAppointmentClick(appointment.id)}
                             >
-                                <div className="flex gap-4 p-6">
-                                    {/* Image */}
-                                    <div className="flex-shrink-0">
-                                        <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center overflow-hidden">
-                                            <Calendar className="w-16 h-16 text-accent/40" />
+                                <div className="p-6 flex flex-col h-full">
+                                    {/* Header with Icon/Image */}
+                                    <div className="flex items-start gap-4 mb-4">
+                                        <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center overflow-hidden">
+                                            {appointment.profileImage ? (
+                                                <img
+                                                    src={appointment.profileImage}
+                                                    alt={appointment.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <Calendar className="w-8 h-8 text-accent" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-lg font-semibold text-primary mb-1 group-hover:text-accent transition-colors line-clamp-2">
+                                                {appointment.title}
+                                            </h3>
+                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                <User className="w-3 h-3" />
+                                                <span className="truncate">{appointment.organizer.name}</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-semibold text-primary mb-2 group-hover:text-accent transition-colors">
-                                            {appointment.title}
-                                        </h3>
+                                    {/* Description */}
+                                    {appointment.description && (
+                                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                                            {appointment.description}
+                                        </p>
+                                    )}
 
-                                        {/* Organizer */}
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent text-xs rounded-full">
-                                                <User className="w-3 h-3" />
-                                                {appointment.organizer.name}
-                                            </span>
-                                            {appointment.organizer.rating && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    ⭐ {appointment.organizer.rating.toFixed(1)} ({appointment.organizer.reviewCount})
+                                    {/* Meta Info */}
+                                    <div className="space-y-2 mb-4 flex-grow">
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <Clock className="w-4 h-4 flex-shrink-0" />
+                                            <span>{appointment.duration} min</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <MapPin className="w-4 h-4 flex-shrink-0" />
+                                            <span className="truncate">{appointment.location || 'Online'}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
+                                        {appointment.organizer.rating ? (
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-yellow-500">⭐</span>
+                                                <span className="text-sm font-medium text-primary">
+                                                    {appointment.organizer.rating.toFixed(1)}
                                                 </span>
-                                            )}
-                                        </div>
-
-                                        {/* Meta Info */}
-                                        <div className="space-y-1 text-sm text-muted-foreground">
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="w-4 h-4" />
-                                                <span>{appointment.duration} minutes</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    ({appointment.organizer.reviewCount})
+                                                </span>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="w-4 h-4" />
-                                                <span>{appointment.location || 'Location TBD'}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Description */}
-                                        {appointment.description && (
-                                            <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-                                                {appointment.description}
-                                            </p>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">No reviews yet</span>
                                         )}
 
-                                        {/* Price Tag */}
-                                        {appointment.requiresPayment && (
-                                            <div className="mt-3">
-                                                <span className="inline-block px-3 py-1 bg-accent/20 text-accent font-semibold text-sm rounded-full">
-                                                    ${appointment.price}
-                                                </span>
-                                            </div>
+                                        {appointment.requiresPayment ? (
+                                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-accent/20 text-accent font-semibold text-sm rounded-full">
+                                                <DollarSign className="w-3 h-3" />
+                                                {appointment.price}
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium text-xs rounded-full">
+                                                Free
+                                            </span>
                                         )}
                                     </div>
                                 </div>

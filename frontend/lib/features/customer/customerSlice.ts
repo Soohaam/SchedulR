@@ -9,6 +9,7 @@ interface AppointmentType {
     type: string;
     price: number;
     location: string;
+    profileImage?: string | null;
     requiresPayment: boolean;
     organizer: {
         id: string;

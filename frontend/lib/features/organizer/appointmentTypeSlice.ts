@@ -41,6 +41,7 @@ interface AppointmentType {
   price: number;
   isActive?: boolean;
   isPublished: boolean;
+  profileImage?: string | null;
   // New fields
   type: 'USER' | 'RESOURCE';
   location?: string;
