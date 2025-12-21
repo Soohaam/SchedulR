@@ -101,6 +101,11 @@ npm run migrate
 
 Check `backend/prisma` and `backend/db/migrations` for migration files.
 
+
+YouTube video link
+
+https://youtu.be/m92FbcjDhIg?si=DQo9t8ao4W4AKLuU
+
 ## Contributing
 
 Contributions are welcome. Please open an issue for discussion and submit PRs against the `main` branch. Follow the existing code style (ESLint/Prettier not enforced in repo) and include tests where appropriate.
