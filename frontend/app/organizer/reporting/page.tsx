@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Search, Filter, Calendar as CalendarIcon, Download, Loader2 } from 'lucide-react';
+import { Search, Filter, Calendar as CalendarIcon, Download, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import axios from 'axios';
@@ -15,30 +15,26 @@ export default function ReportingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [summary, setSummary] = useState<any>(null);
+  const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
   const { token } = useSelector((state: RootState) => state.auth);
 
   const fetchBookings = async () => {
     setIsLoading(true);
     try {
-      // Fetch confirmed, completed, and cancelled bookings for reporting
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/bookings`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
-          // We want "reporting" data, so mostly confirmed/completed history
-          // But fetching all non-pending is essentially reporting
           status: statusFilter || undefined,
           search: searchTerm || undefined,
-          limit: 50 // Fetch more for reporting
+          limit: 50
         }
       });
 
-      console.log('Reporting API response:', response.data); // Debug log
+      console.log('Reporting API response:', response.data);
       
-      // Backend returns { success, bookings, pagination, summary }
       const allBookings = response.data.bookings || [];
       const summaryData = response.data.summary;
       
-      // Filter out pending requests from reporting view if API returns them
       const nonPending = allBookings.filter((b: any) => b.status !== 'PENDING');
       setBookings(nonPending);
       setSummary(summaryData);
@@ -71,7 +67,7 @@ export default function ReportingPage() {
         </div>
       </div>
 
-      {/* Stats Overview - use backend summary or calculate from bookings */}
+      {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 border-border/50">
           <p className="text-sm text-muted-foreground">Total Bookings</p>
@@ -105,12 +101,6 @@ export default function ReportingPage() {
           />
         </div>
         <div className="flex gap-2 items-center">
-          {/* 
-            <Button variant="outline" className="flex gap-2">
-                <CalendarIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Date Range</span>
-            </Button>
-             */}
           <div className="relative">
             <select
               className="h-10 pl-3 pr-8 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
@@ -138,47 +128,83 @@ export default function ReportingPage() {
                 <th className="px-6 py-4 font-medium">Resource/Staff</th>
                 <th className="px-6 py-4 font-medium">Date & Time</th>
                 <th className="px-6 py-4 font-medium">Duration</th>
+                <th className="px-6 py-4 font-medium">Answers</th>
                 <th className="px-6 py-4 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={7} className="px-6 py-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                   </td>
                 </tr>
               ) : bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground italic">
+                  <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground italic">
                     No confirmed bookings found.
                   </td>
                 </tr>
               ) : (
                 bookings.map((booking) => (
-                  <tr key={booking.id} className="bg-card hover:bg-secondary/10 transition-colors">
-                    <td className="px-6 py-4 font-medium">
-                      {booking.customer?.fullName || booking.customerEmail || 'Guest'}
-                    </td>
-                    <td className="px-6 py-4">{booking.appointmentType?.title || 'Appointment'}</td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {booking.resource?.name || booking.staffMember?.name || '—'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {new Date(booking.startTime).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      {booking.appointmentType?.duration}m
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${booking.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800 border-gray-200' :
-                        booking.status === 'CONFIRMED' ? 'bg-green-50 text-green-700 border-green-200' :
-                          'bg-red-50 text-red-700 border-red-200'
-                        }`}>
-                        {booking.status}
-                      </span>
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={booking.id} className="bg-card hover:bg-secondary/10 transition-colors">
+                      <td className="px-6 py-4 font-medium">
+                        {booking.customer?.fullName || booking.customerEmail || 'Guest'}
+                      </td>
+                      <td className="px-6 py-4">{booking.appointmentType?.title || 'Appointment'}</td>
+                      <td className="px-6 py-4 text-muted-foreground">
+                        {booking.resource?.name || booking.staffMember?.name || '—'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {new Date(booking.startTime).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        {booking.appointmentType?.duration}m
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">
+                        {booking.answers && booking.answers.length > 0 ? (
+                          <button
+                            onClick={() => setExpandedBooking(expandedBooking === booking.id ? null : booking.id)}
+                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {booking.answers.length} answer(s)
+                            {expandedBooking === booking.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+                        ) : '—'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${booking.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800 border-gray-200' :
+                          booking.status === 'CONFIRMED' ? 'bg-green-50 text-green-700 border-green-200' :
+                            'bg-red-50 text-red-700 border-red-200'
+                          }`}>
+                          {booking.status}
+                        </span>
+                      </td>
+                    </tr>
+                    {/* Expandable row for answers */}
+                    {expandedBooking === booking.id && booking.answers && booking.answers.length > 0 && (
+                      <tr className="bg-secondary/20">
+                        <td colSpan={7} className="px-6 py-4">
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm">Customer Responses:</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {booking.answers.map((answer: any, idx: number) => (
+                                <div key={idx} className="bg-card p-4 rounded border border-border/50">
+                                  <p className="text-sm font-semibold text-primary mb-2">
+                                    {answer.questionText || `Question ${idx + 1}`}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                                    {answer.answer}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))
               )}
             </tbody>

@@ -51,14 +51,32 @@ export default function MeetingsPage() {
 
     const handleAction = async (id: string, action: 'confirm' | 'reject') => {
         try {
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/bookings/${id}/${action}`, {}, {
+            // For reject we require a reason (backend validation). For confirm we optionally allow a message.
+            let body: any = {};
+
+            if (action === 'reject') {
+                const reason = window.prompt('Enter rejection reason', 'Unavailable');
+                if (!reason || reason.trim().length === 0) {
+                    toast.error('Rejection cancelled — reason is required');
+                    return;
+                }
+                body = { reason: reason.trim() };
+            } else if (action === 'confirm') {
+                const msg = window.prompt('Optional confirmation message (leave empty for none)', '');
+                if (msg && msg.trim().length > 0) body = { confirmationMessage: msg.trim() };
+            }
+
+            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/bookings/${id}/${action}`, body, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
             toast.success(`Booking ${action}ed successfully`);
             fetchRequests(); // Refresh list
-        } catch (error) {
+        } catch (error: any) {
+            // Show server-provided error message when available to help debugging
             console.error(`Failed to ${action} booking:`, error);
-            toast.error(`Failed to ${action} booking`);
+            const serverMessage = error?.response?.data?.message || error?.message;
+            toast.error(`Failed to ${action} booking: ${serverMessage}`);
         }
     };
 
@@ -100,6 +118,7 @@ export default function MeetingsPage() {
                                 <th className="px-6 py-4 font-medium">Type</th>
                                 <th className="px-6 py-4 font-medium">Booked By</th>
                                 <th className="px-6 py-4 font-medium">Resource/User</th>
+                                <th className="px-6 py-4 font-medium">Capacity</th>
                                 <th className="px-6 py-4 font-medium">Requested Time</th>
                                 <th className="px-6 py-4 font-medium">Answers</th>
                                 <th className="px-6 py-4 font-medium">Status</th>
@@ -109,7 +128,7 @@ export default function MeetingsPage() {
                         <tbody className="divide-y divide-border/40">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center">
+                                    <td colSpan={9} className="px-6 py-12 text-center">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                                     </td>
                                 </tr>
@@ -121,6 +140,7 @@ export default function MeetingsPage() {
                                             <td className="px-6 py-4 text-muted-foreground">{booking.appointmentType?.type}</td>
                                             <td className="px-6 py-4">{booking.customer?.fullName || booking.customerEmail}</td>
                                             <td className="px-6 py-4">{booking.resource?.name || booking.staffMember?.name || '—'}</td>
+                                            <td className="px-6 py-4">{booking.capacity || 1}</td>
                                             <td className="px-6 py-4 flex flex-col">
                                                 <span>{new Date(booking.startTime).toLocaleDateString()}</span>
                                                 <span className="text-xs text-muted-foreground">
@@ -170,7 +190,7 @@ export default function MeetingsPage() {
                                         {/* Expandable row for answers */}
                                         {expandedBooking === booking.id && booking.answers && booking.answers.length > 0 && (
                                             <tr className="bg-secondary/20">
-                                                <td colSpan={8} className="px-6 py-4">
+                                                <td colSpan={9} className="px-6 py-4">
                                                     <div className="space-y-3">
                                                         <h4 className="font-semibold text-sm">Customer Answers:</h4>
                                                         {booking.answers.map((answer: any, idx: number) => (

@@ -7,6 +7,7 @@ import { fetchOrganizerBookings } from '@/lib/features/organizer/organizerSlice'
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
 import { 
   Search, 
   Calendar, 
@@ -15,12 +16,18 @@ import {
   CheckCircle, 
   XCircle, 
   AlertCircle,
-  Plus
+  Plus,
+  Eye,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function OrganizerDashboard() {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { bookings, isLoading, stats } = useSelector((state: RootState) => state.organizer);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +43,18 @@ export default function OrganizerDashboard() {
       case 'CANCELLED': return 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
       default: return 'text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-400';
     }
+  };
+
+  const handleViewDetails = (bookingId: string) => {
+    router.push(`/organizer/appointments/${bookingId}`);
+  };
+
+  const handleEdit = (bookingId: string) => {
+    toast.info('Edit functionality coming soon');
+  };
+
+  const handleDelete = (bookingId: string) => {
+    toast.error('Delete functionality requires confirmation - coming soon');
   };
 
   return (
@@ -165,9 +184,29 @@ export default function OrganizerDashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
+                      <Dropdown
+                        trigger={
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-secondary/50">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        }
+                        items={[
+                          {
+                            label: 'View Details',
+                            onClick: () => handleViewDetails(booking.id),
+                          },
+                          {
+                            label: 'Edit',
+                            onClick: () => handleEdit(booking.id),
+                          },
+                          {
+                            label: 'Delete',
+                            onClick: () => handleDelete(booking.id),
+                            variant: 'danger',
+                          },
+                        ]}
+                        align="right"
+                      />
                     </td>
                   </motion.tr>
                 ))

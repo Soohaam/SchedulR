@@ -198,7 +198,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatsCard
             title="Total Revenue"
-            value={`$${dashboardStats.revenue.total.toLocaleString()}`}
+            value={`₹${dashboardStats.revenue.total.toLocaleString('en-IN')}`}
             subtitle="All time"
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +213,7 @@ export default function AdminDashboardPage() {
           />
           <StatsCard
             title="This Month"
-            value={`$${dashboardStats.revenue.thisMonth.toLocaleString()}`}
+            value={`₹${dashboardStats.revenue.thisMonth.toLocaleString('en-IN')}`}
             trend={{
               value: dashboardStats.revenue.growth,
               isPositive: dashboardStats.revenue.growth >= 0,
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
           />
           <StatsCard
             title="Last Month"
-            value={`$${dashboardStats.revenue.lastMonth.toLocaleString()}`}
+            value={`₹${dashboardStats.revenue.lastMonth.toLocaleString('en-IN')}`}
             subtitle="Previous period"
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

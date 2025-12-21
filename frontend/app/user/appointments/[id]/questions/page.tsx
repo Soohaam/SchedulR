@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import api from '@/lib/api';
+import { log } from 'console';
 
 interface Question {
     id: string;
-    question: string;
-    type: 'TEXT' | 'TEXTAREA' | 'RADIO' | 'CHECKBOX';
-    required: boolean;
-    options?: string[];
+    questionText: string;
+    questionType: 'SHORT_TEXT' | 'LONG_TEXT' | 'MULTIPLE_CHOICE' | 'CHECKBOXES' | 'DROPDOWN' | 'YES_NO' | 'DATE' | 'NUMBER';
+    isRequired: boolean;
+    options?: string[] | null;
     order: number;
 }
 
@@ -49,6 +50,7 @@ export default function QuestionsPage() {
             setLoading(true);
             const response = await api.get(`/api/v1/appointments/${appointmentId}/details`);
             const fetchedQuestions = response.data.appointmentType.questions || [];
+            console.log('Fetched Questions:', fetchedQuestions);
             setQuestions(fetchedQuestions.sort((a: Question, b: Question) => a.order - b.order));
         } catch (error) {
             console.error('Error fetching questions:', error);
@@ -67,7 +69,7 @@ export default function QuestionsPage() {
     const handleContinue = () => {
         // Validate required questions
         const unanswered = questions.filter(q =>
-            q.required && (!answers[q.id] || (Array.isArray(answers[q.id]) && answers[q.id].length === 0))
+            q.isRequired && (!answers[q.id] || (Array.isArray(answers[q.id]) && answers[q.id].length === 0))
         );
 
         if (unanswered.length > 0) {
@@ -78,7 +80,7 @@ export default function QuestionsPage() {
         // Format answers for backend
         const formattedAnswers = questions.map(q => ({
             questionId: q.id,
-            question: q.question,
+            questionText: q.questionText,
             answer: Array.isArray(answers[q.id])
                 ? answers[q.id].join(', ')
                 : answers[q.id] || ''
@@ -149,38 +151,38 @@ export default function QuestionsPage() {
                                     <label className="block mb-4">
                                         <div className="flex items-start gap-2 mb-3">
                                             <span className="text-lg font-semibold text-primary">
-                                                {index + 1}. {question.question}
+                                                {index + 1}. {question.questionText}
                                             </span>
-                                            {question.required && (
+                                            {question.isRequired && (
                                                 <span className="text-red-500 text-sm">*</span>
                                             )}
                                         </div>
 
-                                        {question.type === 'TEXT' && (
+                                        {(question.questionType === 'SHORT_TEXT') && (
                                             <Input
                                                 type="text"
                                                 value={(answers[question.id] as string) || ''}
                                                 onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                                                 placeholder="Your answer"
-                                                required={question.required}
+                                                required={question.isRequired}
                                                 className="bg-background"
                                             />
                                         )}
 
-                                        {question.type === 'TEXTAREA' && (
+                                        {(question.questionType === 'LONG_TEXT') && (
                                             <textarea
                                                 value={(answers[question.id] as string) || ''}
                                                 onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                                                 placeholder="Your answer"
-                                                required={question.required}
+                                                required={question.isRequired}
                                                 rows={4}
                                                 className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                                             />
                                         )}
 
-                                        {question.type === 'RADIO' && question.options && (
+                                        {(question.questionType === 'MULTIPLE_CHOICE') && question.options && (
                                             <div className="space-y-2">
-                                                {question.options.map((option, optIndex) => (
+                                                {(Array.isArray(question.options) ? question.options : []).map((option, optIndex) => (
                                                     <label key={optIndex} className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="radio"
@@ -196,9 +198,9 @@ export default function QuestionsPage() {
                                             </div>
                                         )}
 
-                                        {question.type === 'CHECKBOX' && question.options && (
+                                        {(question.questionType === 'CHECKBOXES') && question.options && (
                                             <div className="space-y-2">
-                                                {question.options.map((option, optIndex) => (
+                                                {(Array.isArray(question.options) ? question.options : []).map((option, optIndex) => (
                                                     <label key={optIndex} className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="checkbox"
@@ -217,6 +219,59 @@ export default function QuestionsPage() {
                                                     </label>
                                                 ))}
                                             </div>
+                                        )}
+
+                                        {(question.questionType === 'DROPDOWN') && question.options && (
+                                            <select
+                                                value={(answers[question.id] as string) || ''}
+                                                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                                required={question.isRequired}
+                                                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                                            >
+                                                <option value="">Select an option</option>
+                                                {(Array.isArray(question.options) ? question.options : []).map((option, optIndex) => (
+                                                    <option key={optIndex} value={option}>{option}</option>
+                                                ))}
+                                            </select>
+                                        )}
+
+                                        {(question.questionType === 'YES_NO') && (
+                                            <div className="space-y-2">
+                                                {['Yes', 'No'].map((option, optIndex) => (
+                                                    <label key={optIndex} className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="radio"
+                                                            name={question.id}
+                                                            value={option}
+                                                            checked={answers[question.id] === option}
+                                                            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                                            className="w-4 h-4 text-accent"
+                                                        />
+                                                        <span className="text-foreground">{option}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {(question.questionType === 'DATE') && (
+                                            <Input
+                                                type="date"
+                                                value={(answers[question.id] as string) || ''}
+                                                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                                required={question.isRequired}
+                                                className="bg-background"
+                                            />
+                                        )}
+
+                                        {(question.questionType === 'NUMBER') && (
+                                            <Input
+                                                type="number"
+                                                value={(answers[question.id] as string) || ''}
+                                                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                                placeholder="Enter a number"
+                                                required={question.isRequired}
+                                                className="bg-background"
+                                            />
                                         )}
                                     </label>
                                 </Card>

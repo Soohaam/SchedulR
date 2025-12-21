@@ -205,11 +205,17 @@ const getAppointmentDetails = async (appointmentId) => {
   const appointment = appointmentResult.rows[0];
 
   const questionsQuery = `
-    SELECT * FROM "Question"
+    SELECT "id", "questionText", "questionType", "options", "isRequired", "order" FROM "Question"
     WHERE "appointmentTypeId" = $1
     ORDER BY "order" ASC
   `;
   const questionsResult = await pool.query(questionsQuery, [appointmentId]);
+
+  // Parse options JSON for each question
+  const questions = questionsResult.rows.map(q => ({
+    ...q,
+    options: q.options ? JSON.parse(q.options) : null
+  }));
 
   const policyQuery = `SELECT * FROM "CancellationPolicy" WHERE "appointmentTypeId" = $1`;
   const policyResult = await pool.query(policyQuery, [appointmentId]);
@@ -233,7 +239,7 @@ const getAppointmentDetails = async (appointmentId) => {
         rating: rating,
         reviewCount: reviewCount,
       },
-      questions: questionsResult.rows,
+      questions: questions,
       cancellationPolicy: cancellationPolicy,
     },
   };
@@ -264,11 +270,17 @@ const getAppointmentByShareLink = async (shareLink) => {
   const appointment = appointmentResult.rows[0];
 
   const questionsQuery = `
-    SELECT * FROM "Question"
+    SELECT "id", "questionText", "questionType", "options", "isRequired", "order" FROM "Question"
     WHERE "appointmentTypeId" = $1
     ORDER BY "order" ASC
   `;
   const questionsResult = await pool.query(questionsQuery, [appointment.id]);
+
+  // Parse options JSON for each question
+  const questions = questionsResult.rows.map(q => ({
+    ...q,
+    options: q.options ? JSON.parse(q.options) : null
+  }));
 
   const policyQuery = `SELECT * FROM "CancellationPolicy" WHERE "appointmentTypeId" = $1`;
   const policyResult = await pool.query(policyQuery, [appointment.id]);
@@ -292,7 +304,7 @@ const getAppointmentByShareLink = async (shareLink) => {
         rating: rating,
         reviewCount: reviewCount,
       },
-      questions: questionsResult.rows,
+      questions: questions,
       cancellationPolicy: cancellationPolicy,
     },
   };

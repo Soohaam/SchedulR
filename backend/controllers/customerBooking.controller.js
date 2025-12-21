@@ -84,9 +84,16 @@ const cancelBooking = asyncHandler(async (req, res) => {
     const { reason } = req.body;
     const userId = req.user.id;
 
-    const result = await customerBookingService.cancelBooking(id, userId, reason);
+    console.log(`[cancelBooking controller] Cancelling booking: ${id}, reason: ${reason}`);
 
-    res.status(StatusCodes.OK).json(result);
+    try {
+        const result = await customerBookingService.cancelBooking(id, userId, reason);
+        console.log(`[cancelBooking controller] Success:`, result);
+        res.status(StatusCodes.OK).json(result);
+    } catch (error) {
+        console.error(`[cancelBooking controller] Error:`, error);
+        throw error;
+    }
 });
 
 /**

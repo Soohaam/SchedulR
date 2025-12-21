@@ -126,18 +126,19 @@ Odoo Appointment Booking Team`;
  */
 const getBookingCancelledTemplate = (data) => {
     const subject = 'Booking Cancelled';
+    const refundAmount = typeof data.refundAmount === 'number' ? data.refundAmount : 0;
 
-    const text = `Dear ${data.customerName},
+    const text = `Dear ${data.customerName || 'Valued Customer'},
 
 Your booking has been cancelled.
 
-Appointment: ${data.appointmentTitle}
-Provider: ${data.providerName}
-Date: ${formatDate(data.date)}
-Time: ${formatTime(data.startTime)}
-Reason: ${data.reason}
+Appointment: ${data.appointmentTitle || 'N/A'}
+Provider: ${data.providerName || 'N/A'}
+Date: ${formatDate(data.date) || 'N/A'}
+Time: ${formatTime(data.startTime) || 'N/A'}
+Reason: ${data.reason || 'No reason provided'}
 
-${data.refundAmount > 0 ? `Refund Amount: $${data.refundAmount.toFixed(2)}\nRefund will be processed within 5-7 business days.` : ''}
+${refundAmount > 0 ? `Refund Amount: $${refundAmount.toFixed(2)}\nRefund will be processed within 5-7 business days.` : ''}
 
 Best regards,
 Odoo Appointment Booking Team`;
@@ -145,23 +146,23 @@ Odoo Appointment Booking Team`;
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #d9534f;">${subject}</h2>
-            <p>Dear ${data.customerName},</p>
+            <p>Dear ${data.customerName || 'Valued Customer'},</p>
             <p>Your booking has been cancelled.</p>
             
             <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <p><strong>Appointment:</strong> ${data.appointmentTitle}</p>
-                <p><strong>Provider:</strong> ${data.providerName}</p>
-                <p><strong>Date:</strong> ${formatDate(data.date)}</p>
-                <p><strong>Time:</strong> ${formatTime(data.startTime)}</p>
-                <p><strong>Reason:</strong> ${data.reason}</p>
+                <p><strong>Appointment:</strong> ${data.appointmentTitle || 'N/A'}</p>
+                <p><strong>Provider:</strong> ${data.providerName || 'N/A'}</p>
+                <p><strong>Date:</strong> ${formatDate(data.date) || 'N/A'}</p>
+                <p><strong>Time:</strong> ${formatTime(data.startTime) || 'N/A'}</p>
+                <p><strong>Reason:</strong> ${data.reason || 'No reason provided'}</p>
             </div>
             
-            ${data.refundAmount > 0 ? `
+            ${refundAmount > 0 ? `
                 <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p><strong>Refund Amount:</strong> $${data.refundAmount.toFixed(2)}</p>
-                    <p>Refund will be processed within 5-7 business days.</p>
+                    <p style="color: #155724; margin: 0;"><strong>Refund Amount: $${refundAmount.toFixed(2)}</strong></p>
+                    <p style="color: #155724; margin: 5px 0 0 0; font-size: 14px;">Refund will be processed within 5-7 business days.</p>
                 </div>
-            ` : ''}
+            ` : '<p style="color: #999; font-size: 14px;">No refund is applicable for this cancellation.</p>'}
             
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
             <p style="color: #999; font-size: 12px;">

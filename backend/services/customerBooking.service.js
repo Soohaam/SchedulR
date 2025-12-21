@@ -682,8 +682,16 @@ const cancelBooking = async (bookingId, userId, reason) => {
     const client = await pool.connect();
 
     try {
+        console.log(`[cancelBooking] Starting cancellation for booking: ${bookingId}, user: ${userId}`);
         await client.query('BEGIN');
 
+        // First, lock the booking row
+        await client.query(
+            `SELECT 1 FROM "Booking" WHERE id = $1 FOR UPDATE`,
+            [bookingId]
+        );
+
+        // Now fetch all the data we need
         const bookingResult = await client.query(
             `SELECT b.*, at.title as "appointmentTitle",
                     u."fullName" as "customerName", u.email as "customerEmail",
@@ -698,25 +706,32 @@ const cancelBooking = async (bookingId, userId, reason) => {
              LEFT JOIN "Resource" r ON b."resourceId" = r.id
              LEFT JOIN "Payment" p ON b.id = p."bookingId"
              LEFT JOIN "CancellationPolicy" cp ON at.id = cp."appointmentTypeId"
-             WHERE b.id = $1 FOR UPDATE`,
+             WHERE b.id = $1`,
             [bookingId]
         );
 
         if (bookingResult.rows.length === 0) {
+            console.log(`[cancelBooking] Booking not found: ${bookingId}`);
             throw new AppError('Booking not found', StatusCodes.NOT_FOUND);
         }
 
         const booking = bookingResult.rows[0];
+        console.log(`[cancelBooking] Booking found:`, { id: booking.id, status: booking.status, customerId: booking.customerId });
 
         if (booking.customerId !== userId) {
+            console.log(`[cancelBooking] Authorization failed: ${booking.customerId} !== ${userId}`);
             throw new AppError('You are not authorized to cancel this booking', StatusCodes.FORBIDDEN);
         }
 
         if (booking.status !== 'PENDING' && booking.status !== 'CONFIRMED') {
+            console.log(`[cancelBooking] Invalid status: ${booking.status}`);
             throw new AppError(`Cannot cancel booking with status: ${booking.status}`, StatusCodes.BAD_REQUEST);
         }
 
-        if (!booking.allowCancellation) {
+        // Check if cancellation is allowed (default to true if no policy)
+        const allowCancellation = booking.allowCancellation !== false;
+        if (!allowCancellation) {
+            console.log(`[cancelBooking] Cancellation not allowed by policy`);
             throw new AppError('This booking cannot be cancelled according to the cancellation policy', StatusCodes.BAD_REQUEST);
         }
 
@@ -725,7 +740,10 @@ const cancelBooking = async (bookingId, userId, reason) => {
         const hoursUntilBooking = (startTime - now) / (1000 * 60 * 60);
         const deadlineHours = booking.cancellationDeadlineHours || 24;
 
+        console.log(`[cancelBooking] Hours until booking: ${hoursUntilBooking}, deadline: ${deadlineHours}`);
+
         if (hoursUntilBooking <= deadlineHours) {
+            console.log(`[cancelBooking] Cancellation deadline passed`);
             throw new AppError(
                 `Cancellation deadline has passed. Bookings must be cancelled at least ${deadlineHours} hours in advance.`,
                 StatusCodes.BAD_REQUEST
@@ -740,7 +758,10 @@ const cancelBooking = async (bookingId, userId, reason) => {
         if (booking.paymentId && booking.paymentStatus === 'SUCCESS') {
             refundPercentage = booking.refundPercentage || 100;
             const cancellationFee = booking.cancellationFee ? parseFloat(booking.cancellationFee) : 0;
-            refundAmount = (parseFloat(booking.paymentAmount) * refundPercentage / 100) - cancellationFee;
+            const paymentAmount = booking.paymentAmount ? parseFloat(booking.paymentAmount) : 0;
+            refundAmount = Math.max(0, (paymentAmount * refundPercentage / 100) - cancellationFee);
+
+            console.log(`[cancelBooking] Processing refund: amount=${refundAmount}, percentage=${refundPercentage}`);
 
             if (refundAmount > 0) {
                 await client.query(
@@ -753,6 +774,7 @@ const cancelBooking = async (bookingId, userId, reason) => {
         }
 
         // Update booking
+        console.log(`[cancelBooking] Updating booking status to CANCELLED`);
         await client.query(
             `UPDATE "Booking" SET status = 'CANCELLED', "cancellationReason" = $1,
                     "cancelledBy" = $2, "cancelledAt" = NOW(), "updatedAt" = NOW() WHERE id = $3`,
@@ -760,6 +782,7 @@ const cancelBooking = async (bookingId, userId, reason) => {
         );
 
         // Create history
+        console.log(`[cancelBooking] Creating booking history`);
         await client.query(
             `INSERT INTO "BookingHistory" (id, "bookingId", action, "performedBy", "oldStatus", "newStatus", reason, "createdAt")
              VALUES (gen_random_uuid(), $1, 'CANCELLED', $2, $3, 'CANCELLED', $4, NOW())`,
@@ -767,18 +790,25 @@ const cancelBooking = async (bookingId, userId, reason) => {
         );
 
         // Send email
-        await sendBookingEmail('cancelled', {
-            customerName: booking.customerName,
-            customerEmail: booking.customerEmail,
-            appointmentTitle: booking.appointmentTitle,
-            providerName: booking.staffName || booking.resourceName,
-            date: booking.date,
-            startTime: booking.startTime,
-            reason,
-            refundAmount
-        });
+        try {
+            console.log(`[cancelBooking] Sending cancellation email`);
+            await sendBookingEmail('cancelled', {
+                customerName: booking.customerName,
+                customerEmail: booking.customerEmail,
+                appointmentTitle: booking.appointmentTitle,
+                providerName: booking.staffName || booking.resourceName,
+                date: booking.date,
+                startTime: booking.startTime,
+                reason,
+                refundAmount
+            });
+        } catch (emailError) {
+            console.error('[cancelBooking] Error sending cancellation email:', emailError);
+            // Don't throw error - allow booking to be cancelled even if email fails
+        }
 
         await client.query('COMMIT');
+        console.log(`[cancelBooking] Booking cancelled successfully`);
 
         return {
             success: true,
@@ -796,6 +826,7 @@ const cancelBooking = async (bookingId, userId, reason) => {
             } : null
         };
     } catch (error) {
+        console.error(`[cancelBooking] Error caught:`, error);
         await client.query('ROLLBACK');
         throw error;
     } finally {
