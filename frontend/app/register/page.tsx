@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import RegisterForm from '../../components/auth/RegisterForm';
 import EmailVerificationForm from '../../components/auth/EmailVerificationForm';
-import { Card } from '../../components/ui/Card';
+import { GlassCard } from '../../components/ui/GlassCard';
+import { LuxuryLogo } from '../../components/ui/LuxuryLogo';
+import { BackgroundParticles } from '../../components/ui/BackgroundParticles';
 import { RootState } from '../../lib/store';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { motion } from 'framer-motion';
@@ -28,54 +30,82 @@ export default function RegisterPage() {
   }, [isAuthenticated, user, requiresEmailVerification, router]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-accent/5 blur-[100px] animate-pulse" />
-        <div className="absolute top-[40%] -left-[10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px] animate-pulse delay-1000" />
-        <div className="absolute -bottom-[20%] right-[20%] w-[60%] h-[60%] rounded-full bg-accent/5 blur-[120px] animate-pulse delay-2000" />
-      </div>
+    <div className="min-h-screen mesh-background vignette flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-all duration-700 relative overflow-hidden">
+      {/* Background Particles */}
+      <BackgroundParticles />
 
-      <div className="absolute top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="sm:mx-auto sm:w-full sm:max-w-md relative z-10"
-      >
-        <div className="flex justify-center mb-6">
-          <motion.div
-            whileHover={{ scale: 1.05, rotate: -5 }}
-            className="w-14 h-14 bg-gradient-to-br from-accent to-accent/80 rounded-2xl flex items-center justify-center text-accent-foreground font-bold text-2xl shadow-xl shadow-accent/20"
-          >
-            S
-          </motion.div>
+      {/* Theme Toggle */}
+      <div className="absolute top-6 right-6 z-50">
+        <div className="frosted-glass-card p-2">
+          <ThemeToggle />
         </div>
-        <h2 className="text-center text-3xl font-bold text-primary tracking-tight">
-          {requiresEmailVerification ? 'Verify your email' : 'Create your account'}
-        </h2>
+      </div>
+
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center mb-8"
+      >
+        {/* Luxury Logo */}
+        <div className="flex justify-center mb-8">
+          <LuxuryLogo size="lg" />
+        </div>
+
+        {/* Membership Access Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="luxury-heading text-4xl md:text-5xl mb-4 tracking-wider"
+        >
+          MEMBERSHIP ACCESS
+        </motion.h1>
+
+        {/* Subtitle */}
         {!requiresEmailVerification && (
-          <p className="mt-2 text-center text-sm text-muted-foreground">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="elegant-text text-center mb-6"
+          >
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-accent hover:text-accent/80 transition-colors underline-offset-4 hover:underline">
-              Sign in
+            <Link 
+              href="/login" 
+              className="text-accent hover:text-accent/80 transition-all duration-500 font-medium underline-offset-4 hover:underline"
+            >
+              Enter Portal
             </Link>
-          </p>
+          </motion.p>
         )}
       </motion.div>
 
+      {/* Main Form Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10"
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+        className="sm:mx-auto sm:w-full sm:max-w-lg px-4 sm:px-0 relative z-10"
       >
-        <Card className="bg-card/80 backdrop-blur-xl border-border/50 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+        <GlassCard className="shadow-2xl">
           {requiresEmailVerification ? <EmailVerificationForm /> : <RegisterForm />}
-        </Card>
+        </GlassCard>
+      </motion.div>
+
+      {/* Decorative Elements */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1, delay: 0.6 }}
+        className="flex justify-center mt-12 relative z-10"
+      >
+        <div className="flex items-center space-x-4 opacity-60">
+          <div className="w-16 h-px bg-gradient-to-r from-transparent via-accent to-transparent"></div>
+          <div className="w-3 h-3 border border-accent rotate-45 bg-accent/20"></div>
+          <div className="w-16 h-px bg-gradient-to-r from-transparent via-accent to-transparent"></div>
+        </div>
       </motion.div>
     </div>
   );

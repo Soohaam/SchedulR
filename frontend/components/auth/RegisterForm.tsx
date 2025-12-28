@@ -7,8 +7,8 @@ import * as z from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../../lib/features/auth/authSlice';
 import { AppDispatch, RootState } from '../../lib/store';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
+import { GoldInput } from '../ui/GoldInput';
+import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Briefcase } from 'lucide-react';
@@ -66,40 +66,42 @@ export default function RegisterForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="mb-8 flex justify-center">
-        <div className="bg-muted/50 p-1.5 rounded-xl inline-flex relative w-full max-w-[300px] border border-border/50 backdrop-blur-sm">
-          <div className="absolute inset-0 rounded-xl bg-muted/50" />
+      {/* Luxury Role Toggle */}
+      <div className="mb-10 flex justify-center">
+        <div className="luxury-toggle inline-flex relative w-full max-w-[320px]">
           <div className="relative z-10 grid grid-cols-2 w-full gap-1">
             <button
               onClick={() => setRole('customer')}
-              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${role === 'customer' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                }`}
+              className={`luxury-toggle-option ${
+                role === 'customer' ? 'luxury-toggle-active' : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               {role === 'customer' && (
                 <motion.div
                   layoutId="activeRole"
-                  className="absolute inset-0 bg-background shadow-sm rounded-lg border border-border/50"
+                  className="absolute inset-0 bg-gradient-to-r from-accent via-accent/90 to-accent rounded-lg"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
-              <span className="relative z-10 flex items-center gap-2">
+              <span className="relative z-10 flex items-center justify-center gap-2 text-sm">
                 <User size={16} />
                 Customer
               </span>
             </button>
             <button
               onClick={() => setRole('organiser')}
-              className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${role === 'organiser' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                }`}
+              className={`luxury-toggle-option ${
+                role === 'organiser' ? 'luxury-toggle-active' : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               {role === 'organiser' && (
                 <motion.div
                   layoutId="activeRole"
-                  className="absolute inset-0 bg-background shadow-sm rounded-lg border border-border/50"
+                  className="absolute inset-0 bg-gradient-to-r from-accent via-accent/90 to-accent rounded-lg"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
-              <span className="relative z-10 flex items-center gap-2">
+              <span className="relative z-10 flex items-center justify-center gap-2 text-sm">
                 <Briefcase size={16} />
                 Organizer
               </span>
@@ -108,75 +110,67 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
         <AnimatePresence mode="wait">
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm"
+              className="bg-destructive/10 border border-destructive/20 text-destructive px-6 py-4 rounded-xl text-sm backdrop-blur-sm"
             >
               {error}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="space-y-4">
-          <Input
+        <div className="space-y-8">
+          <GoldInput
             label="Full Name"
             type="text"
             placeholder={role === 'customer' ? "John Doe" : "Event Organization Inc."}
             error={errors.fullName?.message}
             {...register('fullName')}
-            className="bg-background"
           />
 
-          <Input
-            label="Email address"
+          <GoldInput
+            label="Email Address"
             type="email"
             autoComplete="email"
             placeholder="name@example.com"
             error={errors.email?.message}
             {...register('email')}
-            className="bg-background"
           />
 
-          <Input
+          <GoldInput
             label="Password"
             type="password"
             autoComplete="new-password"
             placeholder="••••••••"
             error={errors.password?.message}
             {...register('password')}
-            className="bg-background"
           />
 
-          <Input
+          <GoldInput
             label="Confirm Password"
             type="password"
             autoComplete="new-password"
             placeholder="••••••••"
             error={errors.confirmPassword?.message}
             {...register('confirmPassword')}
-            className="bg-background"
           />
         </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11 text-base shadow-lg shadow-accent/20 transition-all hover:scale-[1.02]"
-        >
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Creating account...
-            </div>
-          ) : (
-            `Register as ${role === 'customer' ? 'Customer' : 'Organizer'}`
-          )}
-        </Button>
+        <div className="pt-4">
+          <GoldButton
+            type="submit"
+            disabled={isLoading}
+            className="w-full"
+            isLoading={isLoading}
+          >
+            {isLoading ? 'Creating Account...' : `Register as ${role === 'customer' ? 'Customer' : 'Organizer'}`}
+          </GoldButton>
+        </div>
       </form>
     </div>
   );

@@ -1,12 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Premium display and serif fonts for luxury headings */
+
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-cormorant);
+  --font-display: var(--font-cinzel);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -48,88 +53,485 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #F8F8F8;
-  --foreground: #333333;
-  --card: #FFFFFF;
-  --card-foreground: #333333;
-  --popover: #FFFFFF;
-  --popover-foreground: #333333;
-  --primary: #0F2540;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F2EBE5;
-  --secondary-foreground: #0F2540;
-  --muted: #F2EBE5;
-  --muted-foreground: #64748B;
-  --accent: #C5A05C;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
+  --radius: 0.75rem;
+  /* Premium font variables */
+  --font-cinzel: 'Cinzel', serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+  /* Royal Porcelain Theme (Light Mode) - Refined */
+  --background: #FDFCFA;
+  --foreground: #1A1611;
+  --card: rgba(255, 255, 255, 0.8);
+  --card-foreground: #1A1611;
+  --popover: rgba(255, 255, 255, 0.95);
+  --popover-foreground: #1A1611;
+  --primary: #1A1611;
+  --primary-foreground: #FDFCFA;
+  --secondary: rgba(255, 255, 255, 0.6);
+  --secondary-foreground: #1A1611;
+  --muted: rgba(255, 255, 255, 0.4);
+  --muted-foreground: #6B6358;
+  --accent: #C8A882;
+  --accent-foreground: #1A1611;
+  --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #C5A05C;
+  --border: rgba(255, 255, 255, 0.2);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #E6C2A6;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: #F8F8F8;
-  --sidebar-foreground: #333333;
-  --sidebar-primary: #0F2540;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F2EBE5;
-  --sidebar-accent-foreground: #0F2540;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #C5A05C;
+  --sidebar: #F7F5F2;
+  --sidebar-foreground: #2C241B;
+  --sidebar-primary: #2C241B;
+  --sidebar-primary-foreground: #F7F5F2;
+  --sidebar-accent: rgba(255, 255, 255, 0.5);
+  --sidebar-accent-foreground: #2C241B;
+  --sidebar-border: rgba(255, 255, 255, 0.2);
+  --sidebar-ring: #E6C2A6;
+
+  --sidebar: #F7F5F2;
+  --sidebar-foreground: #2C241B;
+  --sidebar-primary: #2C241B;
+  --sidebar-primary-foreground: #F7F5F2;
+  --sidebar-accent: rgba(255, 255, 255, 0.5);
+  --sidebar-accent-foreground: #2C241B;
+  --sidebar-border: rgba(255, 255, 255, 0.2);
+  --sidebar-ring: #C8A882;
+
+  /* Subtle Corner Gradients */
+  --corner-gradient-tl: radial-gradient(circle at top left, rgba(200, 168, 130, 0.08) 0%, transparent 50%);
+  --corner-gradient-tr: radial-gradient(circle at top right, rgba(200, 168, 130, 0.06) 0%, transparent 50%);
+  --corner-gradient-bl: radial-gradient(circle at bottom left, rgba(200, 168, 130, 0.04) 0%, transparent 50%);
+  --corner-gradient-br: radial-gradient(circle at bottom right, rgba(200, 168, 130, 0.05) 0%, transparent 50%);
+
+  /* Refined Gold Effects */
+  --gold-gradient: linear-gradient(135deg, #B8956F 0%, #D4C4A8 30%, #F2E6D3 50%, #D4C4A8 70%, #B8956F 100%);
+  --gold-shimmer: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+
+  /* Glass Effects */
+  --glass-border: linear-gradient(135deg, rgba(230, 194, 166, 0.3) 0%, transparent 50%, rgba(230, 194, 166, 0.1) 100%);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+
+  /* Glow Effects */
+  --glow-primary: rgba(230, 194, 166, 0.3);
+  --glow-secondary: rgba(230, 194, 166, 0.15);
+  --glow-accent: rgba(230, 194, 166, 0.4);
 }
 
 .dark {
-  --background: #1A1A1A;
-  --foreground: #E0E0E0;
-  --card: #2C3E50;
-  --card-foreground: #E0E0E0;
-  --popover: #2C3E50;
-  --popover-foreground: #E0E0E0;
-  --primary: #F5F5F5;
-  --primary-foreground: #1A1A1A;
-  --secondary: #2C3E50;
-  --secondary-foreground: #E0E0E0;
-  --muted: #2C3E50;
-  --muted-foreground: #A1A1AA;
-  --accent: #D4BB8A;
-  --accent-foreground: #1A1A1A;
-  --destructive: #7F1D1D;
-  --destructive-foreground: #E0E0E0;
-  --border: #4B5563;
-  --input: #4B5563;
-  --ring: #D4BB8A;
+  /* Midnight Obsidian Theme (Dark Mode) - Rich Gold */
+  --background: #0B0A08;
+  --foreground: #F5E6D3;
+  --card: rgba(15, 12, 8, 0.8);
+  --card-foreground: #F5E6D3;
+  --popover: rgba(15, 12, 8, 0.95);
+  --popover-foreground: #F5E6D3;
+  --primary: #F5E6D3;
+  --primary-foreground: #0B0A08;
+  --secondary: rgba(15, 12, 8, 0.6);
+  --secondary-foreground: #F5E6D3;
+  --muted: rgba(15, 12, 8, 0.4);
+  --muted-foreground: #A69B8A;
+  --accent: #FFD700;
+  --accent-foreground: #0B0A08;
+  --destructive: #B91C1C;
+  --destructive-foreground: #F3EAC0;
+  --border: rgba(248, 214, 119, 0.1);
+  --input: rgba(20, 25, 40, 0.3);
+  --ring: #F8D677;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #1A1A1A;
-  --sidebar-foreground: #E0E0E0;
-  --sidebar-primary: #F5F5F5;
-  --sidebar-primary-foreground: #1A1A1A;
-  --sidebar-accent: #2C3E50;
-  --sidebar-accent-foreground: #E0E0E0;
-  --sidebar-border: #4B5563;
-  --sidebar-ring: #D4BB8A;
+  --sidebar: #050505;
+  --sidebar-foreground: #F3EAC0;
+  --sidebar-primary: #F3EAC0;
+  --sidebar-primary-foreground: #050505;
+  --sidebar-accent: rgba(20, 25, 40, 0.4);
+  --sidebar-accent-foreground: #F3EAC0;
+  --sidebar-border: rgba(248, 214, 119, 0.1);
+  --sidebar-ring: #FFD700;
+
+  /* Rich Gold Corner Gradients for Dark Mode */
+  --corner-gradient-tl: radial-gradient(circle at top left, rgba(255, 215, 0, 0.15) 0%, transparent 50%);
+  --corner-gradient-tr: radial-gradient(circle at top right, rgba(255, 215, 0, 0.12) 0%, transparent 50%);
+  --corner-gradient-bl: radial-gradient(circle at bottom left, rgba(255, 215, 0, 0.08) 0%, transparent 50%);
+  --corner-gradient-br: radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+
+  /* Rich Dark Gold Effects */
+  --gold-gradient: linear-gradient(135deg, #B8860B 0%, #FFD700 20%, #FFF8DC 40%, #FFEF94 50%, #FFF8DC 60%, #FFD700 80%, #B8860B 100%);
+  --gold-shimmer: linear-gradient(90deg, transparent 0%, rgba(255, 215, 0, 0.4) 50%, transparent 100%);
+
+  /* Dark Glass Effects */
+  --glass-border: linear-gradient(135deg, rgba(248, 214, 119, 0.2) 0%, transparent 50%, rgba(248, 214, 119, 0.05) 100%);
+  --glass-bg: rgba(20, 25, 40, 0.2);
+
+  /* Dark Glow Effects */
+  --glow-primary: rgba(248, 214, 119, 0.2);
+  --glow-secondary: rgba(248, 214, 119, 0.1);
+  --glow-accent: rgba(248, 214, 119, 0.3);
 }
 
-.metallic-gold-bg {
-  background: linear-gradient(135deg, #C5A05C 0%, #E5C585 50%, #C5A05C 100%);
+/* Ultra-Premium Design System */
+
+/* Liquid Gold Button */
+.liquid-gold-btn {
+  background: var(--gold-gradient);
   background-size: 200% 200%;
-  transition: background-position 0.5s ease;
+  color: var(--accent-foreground);
+  border: none;
+  border-radius: 9999px;
+  padding: 0.875rem 2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.125em;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 0 20px var(--glow-accent);
 }
-.metallic-gold-bg:hover {
+
+.liquid-gold-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--gold-shimmer);
+  transition: left 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 1;
+}
+
+.liquid-gold-btn:hover::before {
+  left: 100%;
+}
+
+.liquid-gold-btn:hover {
   background-position: 100% 100%;
+  box-shadow: 0 0 30px var(--glow-accent), 0 0 60px var(--glow-secondary);
+  transform: translateY(-2px);
 }
 
-.dark .metallic-gold-bg {
-  background: linear-gradient(135deg, #D4BB8A 0%, #F0DBAA 50%, #D4BB8A 100%);
+.liquid-gold-btn span {
+  position: relative;
+  z-index: 2;
+}
+
+/* Diamond Cut Inputs */
+.diamond-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1rem 0;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--foreground);
+  transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+}
+
+.diamond-input::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+.diamond-input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+  box-shadow: 0 2px 0 0 var(--accent);
+}
+
+.diamond-input:focus::after {
+  transform: scaleX(1);
+}
+
+.diamond-input::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--gold-gradient);
+  transform: translateX(-50%) scaleX(0);
+  transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Frosted Glass Cards */
+.frosted-glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid;
+  border-image: var(--glass-border) 1;
+  border-radius: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.frosted-glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: var(--glass-border);
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+.frosted-glass-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Inner boxed form with curved corners and an animated gold border (border only) */
+.inner-box {
+  position: relative;
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  overflow: visible;
+  /* Use premium serif for form content */
+  font-family: var(--font-serif);
+  color: var(--card-foreground);
+}
+
+/* Thin internal border to give the carved card look */
+.inner-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 0 0 2px rgba(0, 0, 0, 0.04);
+  mix-blend-mode: overlay;
+}
+
+/* Animated gold ring (border-only) */
+.inner-box::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(1.25rem + 2px);
+  background: var(--gold-gradient);
+  background-size: 200% 100%;
+  z-index: 0;
+  filter: blur(6px);
+  opacity: 0.9;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 2px;
+  pointer-events: none;
+  animation: gold-flow 6s linear infinite;
+}
+
+@keyframes gold-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Slight tweak to card radius for a more curvy aesthetic */
+.frosted-glass-card {
+  border-radius: 1.75rem;
+}
+
+/* Background Particles */
+.gold-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  background: var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+  animation: float-up 12s linear infinite;
+}
+
+.dark .particle {
+  background: #FFD700;
+  box-shadow: 0 0 2px rgba(255, 215, 0, 0.3);
+}
+
+@keyframes shine-sweep {
+
+  0%,
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateX(100%);
+    opacity: 1;
+  }
+}
+
+@keyframes subtle-shimmer {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translateY(90vh) scale(1);
+  }
+
+  90% {
+    opacity: 1;
+    transform: translateY(10vh) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+}
+
+/* Premium Shiny Typography */
+.luxury-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--gold-gradient);
   background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: subtle-shimmer 6s ease-in-out infinite;
+  position: relative;
+}
+
+.luxury-heading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shine-sweep 3s ease-in-out infinite;
+}
+
+.dark .luxury-heading {
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.1);
+}
+
+.elegant-text {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  letter-spacing: 0.01em;
+}
+
+/* Mesh Background */
+.mesh-background {
+  background:
+    radial-gradient(circle at 25% 25%, var(--glow-primary) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, var(--glow-secondary) 0%, transparent 50%),
+    linear-gradient(135deg, var(--background) 0%, var(--background) 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+  animation: mesh-shift 20s ease-in-out infinite;
+}
+
+@keyframes mesh-shift {
+
+  0%,
+  100% {
+    background-position: 0% 0%, 100% 100%, 0% 0%;
+  }
+
+  50% {
+    background-position: 100% 100%, 0% 0%, 50% 50%;
+  }
+}
+
+/* Vignette Effect */
+.vignette {
+  position: relative;
+}
+
+.vignette::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
+  pointer-events: none;
+}
+
+.dark .vignette::before {
+  background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+/* Role Toggle Luxury Style */
+.luxury-toggle {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.25rem;
+  position: relative;
+}
+
+.luxury-toggle-option {
+  position: relative;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: pointer;
+}
+
+.luxury-toggle-active {
+  background: var(--gold-gradient);
+  color: var(--accent-foreground);
+  box-shadow: 0 4px 12px var(--glow-accent);
 }
 
 .metallic-gold-text {
@@ -147,11 +549,89 @@
   background-clip: text;
 }
 
+@layer utilities {
+  .font-body {
+    font-family: var(--font-sans);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-heading {
+    font-family: var(--font-serif);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+  opacity: 0.8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #B8860B, #FFD700);
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #FFD700, #FFF8DC);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+.dark * {
+  scrollbar-color: #FFD700 transparent;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      var(--corner-gradient-tl),
+      var(--corner-gradient-tr),
+      var(--corner-gradient-bl),
+      var(--corner-gradient-br);
+    background-size: 50% 50%, 50% 50%, 50% 50%, 50% 50%;
+    background-position: top left, top right, bottom left, bottom right;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: -1;
   }
 }
