@@ -6,9 +6,11 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/lib/store';
 import { forgotPassword } from '@/lib/features/auth/authSlice';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Card } from '@/components/ui/Card';
+import { GoldButton } from '@/components/ui/GoldButton';
+import { GoldInput } from '@/components/ui/GoldInput';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { BackgroundParticles } from '@/components/ui/BackgroundParticles';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 
@@ -35,16 +37,14 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 transition-colors duration-500" />
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent opacity-50" />
-        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50" />
-      </div>
+    <div className="min-h-screen mesh-background vignette flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-all duration-700 relative overflow-hidden">
+      {/* Background Particles */}
+      <BackgroundParticles />
 
       <div className="absolute top-4 right-4 z-50">
-        <ThemeToggle />
+        <div className="frosted-glass-card p-2">
+          <ThemeToggle />
+        </div>
       </div>
 
       <motion.div
@@ -72,9 +72,9 @@ export default function ForgotPasswordPage() {
         transition={{ duration: 0.5, delay: 0.1 }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10"
       >
-        <Card className="bg-card/80 backdrop-blur-xl border-border/50 shadow-2xl p-8">
+        <GlassCard className="bg-card/80 backdrop-blur-xl border-border/50 p-8">
           {isSubmitted ? (
-            <div className="text-center space-y-6">
+            <div className="inner-box space-y-6 text-center">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto text-green-600 dark:text-green-400">
                 <CheckCircle className="w-8 h-8" />
               </div>
@@ -99,7 +99,8 @@ export default function ForgotPasswordPage() {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit}>
+              <div className="inner-box space-y-6">
               {error && (
                 <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center font-medium">
                   {error}
@@ -114,7 +115,7 @@ export default function ForgotPasswordPage() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
                     <Mail className="h-5 w-5" />
                   </div>
-                  <Input
+                  <GoldInput
                     id="email"
                     type="email"
                     required
@@ -126,13 +127,14 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              <Button
+              <GoldButton
                 type="submit"
-                className="w-full metallic-gold-bg text-accent-foreground font-semibold shadow-lg shadow-accent/20 hover:opacity-90 transition-all"
+                className="w-full"
                 disabled={isLoading}
+                isLoading={isLoading}
               >
                 {isLoading ? 'Sending...' : 'Send Reset Link'}
-              </Button>
+              </GoldButton>
 
               <div className="flex items-center justify-center">
                 <Link href="/login" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors">
@@ -140,9 +142,10 @@ export default function ForgotPasswordPage() {
                   Back to login
                 </Link>
               </div>
+              </div>
             </form>
           )}
-        </Card>
+        </GlassCard>
       </motion.div>
     </div>
   );

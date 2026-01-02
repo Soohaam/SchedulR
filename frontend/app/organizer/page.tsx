@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/store';
 import { fetchOrganizerBookings } from '@/lib/features/organizer/organizerSlice';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { GoldInput } from '@/components/ui/GoldInput';
+import { GoldButton } from '@/components/ui/GoldButton';
 import { Button } from '@/components/ui/Button';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { 
@@ -66,16 +67,16 @@ export default function OrganizerDashboard() {
           <p className="text-muted-foreground">Welcome back, here's what's happening today.</p>
         </div>
         <Link href="/organizer/appointments/create">
-          <Button className="metallic-gold-bg text-accent-foreground shadow-lg shadow-accent/20">
+          <GoldButton className="shadow-lg shadow-accent/20">
             <Plus className="w-4 h-4 mr-2" />
             New Appointment
-          </Button>
+          </GoldButton>
         </Link>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        <GlassCard className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
@@ -85,8 +86,8 @@ export default function OrganizerDashboard() {
               <Calendar className="w-5 h-5" />
             </div>
           </div>
-        </Card>
-        <Card className="p-6 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        </GlassCard>
+        <GlassCard className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Pending</p>
@@ -96,8 +97,8 @@ export default function OrganizerDashboard() {
               <AlertCircle className="w-5 h-5" />
             </div>
           </div>
-        </Card>
-        <Card className="p-6 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        </GlassCard>
+        <GlassCard className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Confirmed</p>
@@ -107,17 +108,17 @@ export default function OrganizerDashboard() {
               <CheckCircle className="w-5 h-5" />
             </div>
           </div>
-        </Card>
+        </GlassCard>
       </div>
 
       {/* Recent Bookings */}
-      <Card className="border-border/50 shadow-sm overflow-hidden">
+      <GlassCard className="shadow-sm overflow-hidden">
         <div className="p-6 border-b border-border/50 flex flex-col sm:flex-row justify-between items-center gap-4">
           <h2 className="text-xl font-semibold text-primary">Recent Bookings</h2>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search bookings..." 
+            <GoldInput
+              placeholder="Search bookings..."
               className="pl-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -165,7 +166,7 @@ export default function OrganizerDashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-foreground">{booking.appointmentType?.title || booking.appointmentType?.name}</div>
+                      <div className="text-sm text-foreground">{booking.appointmentType?.title ?? 'Service'}</div>
                       <div className="text-xs text-muted-foreground">{booking.appointmentType?.duration || 30} mins</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -214,7 +215,7 @@ export default function OrganizerDashboard() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </GlassCard>
     </div>
   );
 }

@@ -130,7 +130,7 @@ export default function QuestionsPage() {
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {questions.length === 0 ? (
-                    <Card className="p-8 text-center">
+                    <GlassCard className="p-8 text-center">
                         <HelpCircle className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-primary mb-2">No questions required</h3>
                         <p className="text-muted-foreground mb-6">You can proceed directly to the next step</p>

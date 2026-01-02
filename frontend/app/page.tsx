@@ -6,7 +6,10 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { BackgroundParticles } from '@/components/ui/BackgroundParticles';
 import { Button } from '@/components/ui/Button';
+import { GoldButton } from '@/components/ui/GoldButton';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { motion } from 'framer-motion';
 import Clock3D from '@/components/landing/Clock3D';
 import { Calendar, CheckCircle, BarChart3, Users, Clock, Shield } from 'lucide-react';
@@ -45,7 +48,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300 font-sans selection:bg-accent/30">
+    <div className="min-h-screen mesh-background vignette flex flex-col text-foreground transition-colors duration-300 font-sans selection:bg-accent/30 relative overflow-hidden">
+      <BackgroundParticles />
+
+      {/* Header */}
       {/* Header */}
       <header className="w-full py-6 px-6 md:px-12 flex justify-between items-center max-w-7xl mx-auto z-50 relative">
         <div className="flex items-center gap-3">
@@ -58,9 +64,9 @@ export default function Home() {
             <Button variant="ghost" className="text-foreground hover:text-accent transition-colors font-medium text-base">Log in</Button>
           </Link>
           <Link href="/register">
-            <Button className="metallic-gold-bg text-accent-foreground hover:opacity-90 shadow-lg shadow-accent/20 transition-all border-0 font-semibold px-6">
+            <GoldButton className="px-8 py-3 text-lg w-full sm:w-auto">
               Get Started
-            </Button>
+            </GoldButton>
           </Link>
         </div>
       </header>
@@ -95,9 +101,9 @@ export default function Home() {
               className="flex flex-col sm:flex-row gap-4 pt-4"
             >
               <Link href="/register">
-                <Button size="lg" className="metallic-gold-bg text-accent-foreground hover:opacity-90 text-lg px-8 py-6 shadow-xl shadow-accent/30 rounded-xl transition-all hover:scale-105 border-0 font-semibold w-full sm:w-auto">
+                <GoldButton className="text-lg px-8 py-6 shadow-xl shadow-accent/30 w-full sm:w-auto">
                   Book Appointment
-                </Button>
+                </GoldButton>
               </Link>
               <Link href="/login">
                 <Button variant="ghost" size="lg" className="bg-secondary/50 hover:bg-secondary text-foreground hover:text-accent text-lg px-8 py-6 rounded-xl transition-all border-0 font-medium w-full sm:w-auto">
@@ -202,23 +208,25 @@ export default function Home() {
               </ul>
             </div>
 
-            <div className="bg-card rounded-2xl shadow-2xl border border-border/50 p-6 relative overflow-hidden">
+            <div className="relative">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-3xl"></div>
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="font-semibold text-card-foreground">Weekly Overview</h4>
                   <BarChart3 className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <div className="flex items-end justify-between gap-2 h-40">
-                  {[40, 70, 45, 90, 60, 80, 50].map((h, i) => (
-                    <div key={i} className="w-full bg-secondary rounded-t-lg relative group overflow-hidden">
-                      <div
-                        className="absolute bottom-0 left-0 right-0 bg-accent/80 transition-all duration-500 group-hover:bg-accent"
-                        style={{ height: `${h}%` }}
-                      ></div>
-                    </div>
-                  ))}
-                </div>
+                <GlassCard className="p-6">
+                  <div className="flex items-end justify-between gap-2 h-40">
+                    {[40, 70, 45, 90, 60, 80, 50].map((h, i) => (
+                      <div key={i} className="w-full bg-secondary rounded-t-lg relative group overflow-hidden">
+                        <div
+                          className="absolute bottom-0 left-0 right-0 bg-accent/80 transition-all duration-500 group-hover:bg-accent"
+                          style={{ height: `${h}%` }}
+                        ></div>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
                 </div>

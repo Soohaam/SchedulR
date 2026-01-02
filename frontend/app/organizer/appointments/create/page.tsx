@@ -5,8 +5,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/store';
 import { createAppointmentType, updateAppointmentType, fetchAppointmentTypeById } from '@/lib/features/organizer/appointmentTypeSlice';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { GoldInput } from '@/components/ui/GoldInput';
+import { GoldButton } from '@/components/ui/GoldButton';
 import { Button } from '@/components/ui/Button';
 import { MultiSelect } from '@/components/ui/MultiSelect';
 import { ArrowLeft, Save, Calendar, HelpCircle, Settings, FileText, Clock, Plus, Trash2, Upload, X, Image as ImageIcon, Users, Box } from 'lucide-react';
@@ -275,14 +276,14 @@ export default function CreateAppointmentTypePage() {
           >
             Save Draft
           </Button>
-          <Button
+          <GoldButton
             onClick={(e) => handleSubmit(e, true)}
             disabled={isLoading || isFetching}
-            className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/90 hover:via-accent/80 hover:to-accent/70 text-accent-foreground shadow-xl shadow-accent/30 hover:shadow-2xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 min-w-[140px] font-semibold"
+            isLoading={isLoading}
+            className="min-w-[140px]"
           >
-            {isLoading ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Update & Publish' : 'Save & Publish')}
-            {!isLoading && <Save className="w-5 h-5 ml-2" />}
-          </Button>
+            {isEditMode ? 'Update & Publish' : 'Save & Publish'}
+          </GoldButton>
         </div>
       </div>
 
@@ -319,7 +320,7 @@ export default function CreateAppointmentTypePage() {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <Card className="p-8 bg-card border-border/50 shadow-sm min-h-[500px]">
+              <GlassCard className="p-8 shadow-sm min-h-[500px]">
 
                 {/* GENERAL TAB */}
                 {activeTab === 'general' && (
@@ -331,7 +332,7 @@ export default function CreateAppointmentTypePage() {
                     <div className="space-y-4">
                       <div>
                         <label className="text-sm font-medium mb-1 block">Title</label>
-                        <Input
+                        <GoldInput
                           required
                           placeholder="e.g. Dental Consultation"
                           value={formData.title}
@@ -435,7 +436,7 @@ export default function CreateAppointmentTypePage() {
                           <label className="text-sm font-medium mb-1 block">Duration (minutes)</label>
                           <div className="relative max-w-[200px]">
                             <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                            <Input
+                            <GoldInput
                               type="number"
                               min="5"
                               className="pl-9"
@@ -446,7 +447,7 @@ export default function CreateAppointmentTypePage() {
                         </div>
                         <div>
                           <label className="text-sm font-medium mb-1 block">Price ($)</label>
-                          <Input
+                          <GoldInput
                             type="number"
                             min="0"
                             className="max-w-[200px]"
@@ -457,7 +458,7 @@ export default function CreateAppointmentTypePage() {
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-1 block">Location</label>
-                        <Input
+                        <GoldInput
                           placeholder="e.g. Clinic, Zoom, Google Meet"
                           value={formData.location}
                           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
@@ -554,14 +555,14 @@ export default function CreateAppointmentTypePage() {
                           </div>
                           {wh.isWorking ? (
                             <div className="flex items-center gap-2">
-                              <Input
+                              <GoldInput
                                 type="time"
                                 value={wh.startTime}
                                 onChange={(e) => updateWorkingHour(index, 'startTime', e.target.value)}
                                 className="w-32 h-9"
                               />
                               <span className="text-muted-foreground">-</span>
-                              <Input
+                              <GoldInput
                                 type="time"
                                 value={wh.endTime}
                                 onChange={(e) => updateWorkingHour(index, 'endTime', e.target.value)}
@@ -610,7 +611,7 @@ export default function CreateAppointmentTypePage() {
                       <h3 className="text-sm font-semibold">Add New Question</h3>
                       <div>
                         <label className="text-xs font-medium mb-1 block">Question</label>
-                        <Input
+                        <GoldInput
                           value={newQuestion.text}
                           onChange={(e) => setNewQuestion({ ...newQuestion, text: e.target.value })}
                           placeholder="e.g. Any allergies?"
@@ -704,7 +705,7 @@ export default function CreateAppointmentTypePage() {
                           <div className="pl-6 space-y-4">
                             <div>
                               <label className="text-sm font-medium mb-1 block">Cancellation Deadline (hours before)</label>
-                              <Input
+                              <GoldInput
                                 type="number"
                                 className="max-w-[150px]"
                                 value={policy.cancellationDeadlineHours}
@@ -713,7 +714,7 @@ export default function CreateAppointmentTypePage() {
                             </div>
                             <div>
                               <label className="text-sm font-medium mb-1 block">Refund Percentage (%)</label>
-                              <Input
+                              <GoldInput
                                 type="number"
                                 className="max-w-[150px]"
                                 min="0" max="100"
@@ -751,7 +752,7 @@ export default function CreateAppointmentTypePage() {
                   </div>
                 )}
 
-              </Card>
+              </GlassCard>
             </motion.div>
           </AnimatePresence>
         </div>

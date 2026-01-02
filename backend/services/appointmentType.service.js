@@ -202,14 +202,17 @@ const listAppointmentTypes = async (organizerId, filters) => {
 
   const whereClause = whereConditions.join(' AND ');
 
+  console.time('listAppointmentTypes:totalCount');
   // Get total count
   const countResult = await pool.query(
     `SELECT COUNT(*) FROM "AppointmentType" WHERE ${whereClause}`,
     queryParams
   );
   const total = parseInt(countResult.rows[0].count);
+  console.timeEnd('listAppointmentTypes:totalCount');
 
   // Get paginated data
+  console.time('listAppointmentTypes:fetchData');
   const dataResult = await pool.query(
     `SELECT "id", "title", "description", "duration", "type", "location", "price", "profileImage", "isPublished", "shareLink", "createdAt", "updatedAt"
      FROM "AppointmentType"
@@ -218,39 +221,77 @@ const listAppointmentTypes = async (organizerId, filters) => {
      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
     [...queryParams, limit, offset]
   );
+  console.timeEnd('listAppointmentTypes:fetchData');
 
-  // Get statistics for each appointment type
-  const appointmentTypesWithStats = await Promise.all(
-    dataResult.rows.map(async (apt) => {
-      const totalBookingsResult = await pool.query(
-        'SELECT COUNT(*) FROM "Booking" WHERE "appointmentTypeId" = $1',
-        [apt.id]
+  // Get statistics for each appointment type (optimized)
+  const ids = dataResult.rows.map((r) => r.id);
+
+  // Prepare baseline data
+  let appointmentTypesWithStats = dataResult.rows.map((apt) => ({
+    ...apt,
+    price: apt.price ? parseFloat(apt.price) : null,
+    statistics: {
+      totalBookings: 0,
+      upcomingBookings: 0,
+      revenue: 0,
+    },
+  }));
+
+  if (ids.length > 0) {
+    console.time('listAppointmentTypes:aggregateStats');
+    try {
+      // Aggregate bookings counts in a single query
+      const bookingsStats = await pool.query(
+        `SELECT "appointmentTypeId",
+                COUNT(*) as totalbookings,
+                SUM(CASE WHEN "startTime" >= NOW() AND "status" != 'CANCELLED' THEN 1 ELSE 0 END) as upcomingbookings
+         FROM "Booking"
+         WHERE "appointmentTypeId" = ANY($1::uuid[])
+         GROUP BY "appointmentTypeId"`,
+        [ids]
       );
 
-      const upcomingBookingsResult = await pool.query(
-        'SELECT COUNT(*) FROM "Booking" WHERE "appointmentTypeId" = $1 AND "startTime" >= NOW() AND "status" != $2',
-        [apt.id, 'CANCELLED']
-      );
-
-      const revenueResult = await pool.query(
-        `SELECT COALESCE(SUM(p."amount"), 0) as revenue
+      // Aggregate revenue per appointment type
+      const revenueStats = await pool.query(
+        `SELECT b."appointmentTypeId", COALESCE(SUM(p."amount"),0) as revenue
          FROM "Payment" p
-         INNER JOIN "Booking" b ON p."bookingId" = b."id"
-         WHERE b."appointmentTypeId" = $1 AND p."status" = $2`,
-        [apt.id, 'SUCCESS']
+         JOIN "Booking" b ON p."bookingId" = b."id"
+         WHERE p."status" = 'SUCCESS' AND b."appointmentTypeId" = ANY($1::uuid[])
+         GROUP BY b."appointmentTypeId"`,
+        [ids]
       );
 
-      return {
+      const bookingsMap = {};
+      bookingsStats.rows.forEach((r) => {
+        // Postgres returns lowercased column names; map safely
+        const key = r.appointmenttypeid || r.appointmentTypeId || r.apppointmenttypeid;
+        bookingsMap[key] = {
+          totalBookings: parseInt(r.totalbookings, 10),
+          upcomingBookings: parseInt(r.upcomingbookings, 10),
+        };
+      });
+
+      const revenueMap = {};
+      revenueStats.rows.forEach((r) => {
+        const key = r.appointmenttypeid || r.appointmentTypeId || r.apppointmenttypeid;
+        revenueMap[key] = parseFloat(r.revenue);
+      });
+
+      appointmentTypesWithStats = appointmentTypesWithStats.map((apt) => ({
         ...apt,
-        price: apt.price ? parseFloat(apt.price) : null,
         statistics: {
-          totalBookings: parseInt(totalBookingsResult.rows[0].count),
-          upcomingBookings: parseInt(upcomingBookingsResult.rows[0].count),
-          revenue: parseFloat(revenueResult.rows[0].revenue),
+          totalBookings: bookingsMap[apt.id]?.totalBookings || 0,
+          upcomingBookings: bookingsMap[apt.id]?.upcomingBookings || 0,
+          revenue: revenueMap[apt.id] || 0,
         },
-      };
-    })
-  );
+      }));
+    } catch (err) {
+      // If aggregation fails or times out, log and continue with default zeroed stats
+      console.error('listAppointmentTypes: aggregate stats failed', err?.message || err);
+    } finally {
+      console.timeEnd('listAppointmentTypes:aggregateStats');
+    }
+  }
 
   return {
     data: appointmentTypesWithStats,

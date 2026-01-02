@@ -7,8 +7,8 @@ import * as z from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../lib/features/auth/authSlice';
 import { AppDispatch, RootState } from '../../lib/store';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
+import { GoldInput } from '../ui/GoldInput';
+import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -59,7 +59,8 @@ export default function LoginForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="inner-box space-y-6">
         <AnimatePresence mode="wait">
           {error && (
             <motion.div
@@ -74,7 +75,7 @@ export default function LoginForm() {
         </AnimatePresence>
 
         <div className="space-y-4">
-          <Input
+          <GoldInput
             label="Email address"
             type="email"
             autoComplete="email"
@@ -84,7 +85,7 @@ export default function LoginForm() {
             className="bg-background"
           />
 
-          <Input
+          <GoldInput
             label="Password"
             type="password"
             autoComplete="current-password"
@@ -101,20 +102,15 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <Button
+        <GoldButton
           type="submit"
           disabled={isLoading}
-          className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11 text-base shadow-lg shadow-accent/20 transition-all hover:scale-[1.02]"
+          className="w-full"
+          isLoading={isLoading}
         >
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Signing in...
-            </div>
-          ) : (
-            'Sign in'
-          )}
-        </Button>
+          Sign in
+        </GoldButton>
+        </div>
       </form>
     </div>
   );

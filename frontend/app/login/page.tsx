@@ -6,10 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import LoginForm from '../../components/auth/LoginForm';
 import TwoFactorForm from '../../components/auth/TwoFactorForm';
-import { Card } from '../../components/ui/Card';
+import { GlassCard } from '../../components/ui/GlassCard';
 import { RootState } from '../../lib/store';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { motion } from 'framer-motion';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';import { BackgroundParticles } from '../../components/ui/BackgroundParticles';import { motion } from 'framer-motion';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,16 +27,14 @@ export default function LoginPage() {
   }, [isAuthenticated, user, requiresTwoFactor, router]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-accent/5 blur-[100px] animate-pulse" />
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px] animate-pulse delay-1000" />
-        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] rounded-full bg-accent/5 blur-[120px] animate-pulse delay-2000" />
-      </div>
+    <div className="min-h-screen mesh-background vignette flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-all duration-700 relative overflow-hidden">
+      {/* Background Particles */}
+      <BackgroundParticles />
 
       <div className="absolute top-4 right-4 z-50">
-        <ThemeToggle />
+        <div className="frosted-glass-card p-2">
+          <ThemeToggle />
+        </div>
       </div>
 
       <motion.div
@@ -73,9 +70,9 @@ export default function LoginPage() {
         transition={{ duration: 0.5, delay: 0.1 }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10"
       >
-        <Card className="bg-card/80 backdrop-blur-xl border-border/50 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+        <GlassCard className="bg-card/80 backdrop-blur-xl border-border/50 ring-1 ring-black/5 dark:ring-white/10">
           {requiresTwoFactor ? <TwoFactorForm /> : <LoginForm />}
-        </Card>
+        </GlassCard>
       </motion.div>
     </div>
   );

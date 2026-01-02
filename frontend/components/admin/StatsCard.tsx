@@ -27,7 +27,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow',
+        'frosted-glass-card p-6 shadow-sm hover:shadow-md transition-shadow',
         className
       )}
     >

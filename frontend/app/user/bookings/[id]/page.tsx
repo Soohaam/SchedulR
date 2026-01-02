@@ -7,7 +7,7 @@ import { RootState } from '@/lib/store';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import api from '@/lib/api';
 
 interface BookingDetail {
@@ -332,7 +332,7 @@ export default function BookingDetailPage() {
                                     <span className="text-primary">{new Date(booking.createdAt).toLocaleDateString()}</span>
                                 </div>
                             </div>
-                        </Card>
+                        </GlassCard>
                     </div>
                 </div>
             </div>

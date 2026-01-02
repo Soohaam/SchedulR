@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Search, Filter, Calendar as CalendarIcon, Download, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
@@ -69,24 +69,24 @@ export default function ReportingPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 border-border/50">
+        <GlassCard className="p-4">
           <p className="text-sm text-muted-foreground">Total Bookings</p>
           <h3 className="text-2xl font-bold">
             {summary ? (summary.confirmed + summary.completed) : bookings.length}
           </h3>
-        </Card>
-        <Card className="p-4 border-border/50">
+        </GlassCard>
+        <GlassCard className="p-4">
           <p className="text-sm text-muted-foreground">Completed</p>
           <h3 className="text-2xl font-bold text-green-600">
             {summary ? summary.completed : bookings.filter(b => b.status === 'COMPLETED').length}
           </h3>
-        </Card>
-        <Card className="p-4 border-border/50">
+        </GlassCard>
+        <GlassCard className="p-4">
           <p className="text-sm text-muted-foreground">Confirmed/Upcoming</p>
           <h3 className="text-2xl font-bold text-blue-600">
             {summary ? summary.confirmed : bookings.filter(b => b.status === 'CONFIRMED').length}
           </h3>
-        </Card>
+        </GlassCard>
       </div>
 
       {/* Filters */}
@@ -118,7 +118,7 @@ export default function ReportingPage() {
       </div>
 
       {/* Table */}
-      <Card className="overflow-hidden border-border/50 shadow-sm">
+      <GlassCard className="overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-secondary/30 border-b border-border/50">
@@ -210,7 +210,7 @@ export default function ReportingPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </GlassCard>
     </div>
   );
 }

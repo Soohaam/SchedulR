@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { GoldInput } from '@/components/ui/GoldInput';
+import { GoldButton } from '@/components/ui/GoldButton';
 import { Button } from '@/components/ui/Button';
 import { Search, Filter, Check, X, Clock, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
@@ -99,7 +100,7 @@ export default function MeetingsPage() {
             <div className="flex items-center gap-4 bg-card p-4 rounded-lg border border-border/50 shadow-sm">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                    <Input
+                    <GoldInput
                         placeholder="Search requests..."
                         className="pl-9"
                         value={searchTerm}
@@ -109,7 +110,7 @@ export default function MeetingsPage() {
             </div>
 
             {/* Table */}
-            <Card className="overflow-hidden border-border/50 shadow-sm">
+            <GlassCard className="overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-muted-foreground uppercase bg-secondary/30 border-b border-border/50">
@@ -168,14 +169,13 @@ export default function MeetingsPage() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button
+                                                    <GoldButton
                                                         size="sm"
-                                                        variant="default"
-                                                        className="bg-green-600 hover:bg-green-700 h-8 px-3"
+                                                        className="h-8 px-3 bg-green-600"
                                                         onClick={() => handleAction(booking.id, 'confirm')}
                                                     >
                                                         <Check className="w-4 h-4 mr-1" /> Approve
-                                                    </Button>
+                                                    </GoldButton>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
@@ -194,7 +194,7 @@ export default function MeetingsPage() {
                                                     <div className="space-y-3">
                                                         <h4 className="font-semibold text-sm">Customer Answers:</h4>
                                                         {booking.answers.map((answer: any, idx: number) => (
-                                                            <div key={idx} className="bg-card p-3 rounded border border-border/50">
+                                                            <div key={idx} className="p-3 rounded border border-border/50 frosted-glass-card">
                                                                 <p className="text-sm font-medium text-muted-foreground mb-1">
                                                                     {answer.questionText || `Question ${idx + 1}`}
                                                                 </p>
@@ -217,7 +217,7 @@ export default function MeetingsPage() {
                         </tbody>
                     </table>
                 </div>
-            </Card>
+            </GlassCard>
         </div>
     );
 }

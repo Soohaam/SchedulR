@@ -110,7 +110,8 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="inner-box space-y-8">
         <AnimatePresence mode="wait">
           {error && (
             <motion.div
@@ -170,6 +171,7 @@ export default function RegisterForm() {
           >
             {isLoading ? 'Creating Account...' : `Register as ${role === 'customer' ? 'Customer' : 'Organizer'}`}
           </GoldButton>
+        </div>
         </div>
       </form>
     </div>

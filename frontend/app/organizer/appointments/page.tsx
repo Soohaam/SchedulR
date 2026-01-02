@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/store';
 import { fetchAppointmentTypes, publishAppointmentType, unpublishAppointmentType, deleteAppointmentType } from '@/lib/features/organizer/appointmentTypeSlice';
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
+import { GoldButton } from '@/components/ui/GoldButton';
 import { Plus, Clock, ExternalLink, Edit, MoreVertical, Copy, Globe, Upload, X, Image as ImageIcon, Calendar, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AppointmentTypesPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { types, isLoading } = useSelector((state: RootState) => state.appointmentType);
+  const { types, isLoading, error } = useSelector((state: RootState) => state.appointmentType);
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
@@ -109,15 +110,24 @@ export default function AppointmentTypesPage() {
 
       <div className="flex justify-between items-center">
         <Link href="/organizer/appointments/create">
-          <Button className="metallic-gold-bg text-accent-foreground shadow-lg shadow-accent/20">
+          <GoldButton className="shadow-lg shadow-accent/20 px-4 py-2">
             <Plus className="w-4 h-4 mr-2" />
             New
-          </Button>
+          </GoldButton>
         </Link>
         <div className="relative w-1/3">
           <input type="text" placeholder="Search" className="w-full bg-secondary/30 border border-border/50 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
         </div>
       </div>
+
+      {error && (
+        <div className="mt-4">
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md flex items-center justify-between">
+            <div className="text-sm">Failed to load appointment types: <span className="font-medium">{error}</span></div>
+            <Button variant="outline" onClick={() => dispatch(fetchAppointmentTypes())} className="ml-4">Retry</Button>
+          </div>
+        </div>
+      )} 
 
       <div className="space-y-4">
         {isLoading ? (
@@ -147,11 +157,11 @@ export default function AppointmentTypesPage() {
               key={type.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.08 }}
+              transition={{ duration: 0.4, delay: Math.min(index * 0.02, 0.2) }} // capped delay to prevent long cascades
               whileHover={{ scale: 1.01 }}
               className="group relative"
             >
-              <Card className="p-6 bg-gradient-to-br from-card/95 via-card/85 to-card/75 backdrop-blur-xl border-border/50 shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-l-accent hover:border-l-primary flex flex-col md:flex-row items-start md:items-center gap-6 relative overflow-hidden">
+              <GlassCard className="p-6 backdrop-blur-xl shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-l-accent hover:border-l-primary flex flex-col md:flex-row items-start md:items-center gap-6 relative overflow-hidden">
                 {/* Animated background gradient */}
                 <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-br from-transparent via-accent/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
@@ -302,7 +312,7 @@ export default function AppointmentTypesPage() {
                     </Button>
                   </motion.div>
                 </div>
-              </Card>
+              </GlassCard>
             </motion.div>
           ))
         )}

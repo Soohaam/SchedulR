@@ -8,7 +8,8 @@ import { logout } from '@/lib/features/auth/authSlice';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, CheckCircle, XCircle, AlertCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { BackgroundParticles } from '@/components/ui/BackgroundParticles';
 import api from '@/lib/api';
 
 interface Booking {
@@ -108,7 +109,8 @@ export default function MyBookingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen mesh-background vignette relative overflow-hidden bg-background">
+            <BackgroundParticles />
             {/* Header */}
             <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -168,8 +170,8 @@ export default function MyBookingsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.05 }}
                         >
-                            <Card
-                                className="cursor-pointer hover:shadow-lg transition-all duration-300 bg-card/80 backdrop-blur-sm border-border/50"
+                            <GlassCard
+                                className="cursor-pointer hover:shadow-lg transition-all duration-300"
                                 onClick={() => router.push(`/user/bookings/${booking.id}`)}
                             >
                                 <div className="p-6">

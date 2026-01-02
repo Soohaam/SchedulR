@@ -7,7 +7,7 @@ import { RootState } from '@/lib/store';
 import { motion } from 'framer-motion';
 import { CheckCircle, Calendar, Clock, MapPin, User, DollarSign, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import api from '@/lib/api';
 
 export default function ConfirmationPage() {
@@ -96,7 +96,7 @@ export default function ConfirmationPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="max-w-2xl w-full"
                 >
-                    <Card className="p-8 text-center">
+                    <GlassCard className="p-8 text-center">
                         <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}

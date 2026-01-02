@@ -6,8 +6,8 @@ import * as z from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { verifyEmail } from '../../lib/features/auth/authSlice';
 import { AppDispatch, RootState } from '../../lib/store';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
+import { GoldInput } from '../ui/GoldInput';
+import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -56,7 +56,8 @@ export default function EmailVerificationForm() {
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="inner-box space-y-6">
       <div className="text-center mb-4">
         <h3 className="text-lg font-medium text-gray-900">Verify your Email</h3>
         <p className="text-sm text-gray-500">
@@ -71,7 +72,7 @@ export default function EmailVerificationForm() {
         </div>
       )}
       
-      <Input
+      <GoldInput
         label="Verification Code"
         type="text"
         placeholder="000000"
@@ -81,9 +82,10 @@ export default function EmailVerificationForm() {
         {...register('code')}
       />
 
-      <Button type="submit" isLoading={isLoading}>
+      <GoldButton type="submit" isLoading={isLoading} className="w-full">
         Verify Email
-      </Button>
+      </GoldButton>
+      </div>
     </form>
   );
 }

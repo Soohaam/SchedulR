@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/lib/store';
 import { fetchAppointmentTypeById, updateAppointmentType, publishAppointmentType, unpublishAppointmentType } from '@/lib/features/organizer/appointmentTypeSlice';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiSelect } from '@/components/ui/MultiSelect';
@@ -360,10 +360,11 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="metallic-gold-bg text-accent-foreground shadow-lg shadow-accent/20 min-w-[120px]"
+            isLoading={isLoading}
+            variant="gold"
+            className="min-w-[120px]"
           >
-            {isLoading ? 'Saving...' : 'Save Changes'}
-            {!isLoading && <Save className="w-4 h-4 ml-2" />}
+            Save Changes
           </Button>
         </div>
       </div>
@@ -401,7 +402,7 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <Card className="p-8 bg-card border-border/50 shadow-sm min-h-[500px]">
+              <GlassCard className="p-8 shadow-sm min-h-[500px]">
 
                 {/* GENERAL TAB */}
                 {activeTab === 'general' && (
@@ -844,7 +845,7 @@ export default function EditAppointmentTypePage({ params }: { params: { id: stri
                   </div>
                 )}
 
-              </Card>
+              </GlassCard>
             </motion.div>
           </AnimatePresence>
         </div>

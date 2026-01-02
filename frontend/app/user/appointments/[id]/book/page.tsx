@@ -265,7 +265,7 @@ export default function BookAppointmentPage() {
 
                     {/* Right Column - Summary */}
                     <div className="lg:col-span-1">
-                        <Card className="p-6 sticky top-24">
+                        <GlassCard className="p-6 sticky top-24">
                             <h2 className="text-xl font-semibold text-primary mb-4">Booking Summary</h2>
 
                             <div className="space-y-4">

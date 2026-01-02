@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { User, Monitor, ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* USERS / STAFF */}
         <Link href="/organizer/settings/users">
-          <Card className="p-6 hover:shadow-lg transition-all border-border/50 group cursor-pointer hover:border-primary/50">
+          <GlassCard className="p-6 hover:shadow-lg transition-all group cursor-pointer hover:border-primary/50">
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
                 <User className="w-6 h-6" />
@@ -37,12 +37,12 @@ export default function SettingsPage() {
             <div className="flex justify-end">
               <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
-          </Card>
+          </GlassCard>
         </Link>
 
         {/* RESOURCES */}
         <Link href="/organizer/settings/resources">
-          <Card className="p-6 hover:shadow-lg transition-all border-border/50 group cursor-pointer hover:border-primary/50">
+          <GlassCard className="p-6 hover:shadow-lg transition-all group cursor-pointer hover:border-primary/50">
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
                 <Monitor className="w-6 h-6" />
@@ -55,7 +55,7 @@ export default function SettingsPage() {
             <div className="flex justify-end">
               <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
-          </Card>
+          </GlassCard>
         </Link>
       </div>
     </div>

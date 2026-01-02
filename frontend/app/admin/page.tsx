@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { AppDispatch, RootState } from '../../lib/store';
 import { fetchDashboardStats } from '../../lib/features/admin/adminSlice';
 import { StatsCard } from '../../components/admin/StatsCard';
-import { Card } from '../../components/ui/Card';
+import { GlassCard } from '../../components/ui/GlassCard';
 
 export default function AdminDashboardPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -250,7 +250,7 @@ export default function AdminDashboardPage() {
       {/* Top Organisers */}
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-4">Top Organisers</h2>
-        <Card className="p-0 overflow-hidden">
+        <GlassCard className="p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-muted/50 border-b border-border">

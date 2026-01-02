@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Input } from '@/components/ui/Input';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -110,7 +110,7 @@ export default function CancelBookingPage() {
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Warning Card */}
-                <Card className="p-6 bg-red-50 border-red-200 mb-6">
+                <GlassCard className="p-6 bg-red-50 mb-6">
                     <div className="flex items-start gap-4">
                         <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
                         <div>
