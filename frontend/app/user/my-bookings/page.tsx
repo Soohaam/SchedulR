@@ -231,7 +231,7 @@ export default function MyBookingsPage() {
                                         </div>
                                     )}
                                 </div>
-                            </Card>
+                            </GlassCard>
                         </motion.div>
                     ))}
                 </div>

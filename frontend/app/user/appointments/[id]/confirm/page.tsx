@@ -7,6 +7,7 @@ import { RootState } from '@/lib/store';
 import { motion } from 'framer-motion';
 import { CheckCircle, Calendar, Clock, MapPin, User, DollarSign, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { GlassCard } from '@/components/ui/GlassCard';
 import api from '@/lib/api';
 
@@ -213,7 +214,7 @@ export default function ConfirmationPage() {
                                 Book Another
                             </Button>
                         </div>
-                    </Card>
+                    </GlassCard>
                 </motion.div>
             </div>
         );

@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, MapPin, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import api from '@/lib/api';
 import { Calendar } from '@/components/ui/Calendar';
 
@@ -347,7 +348,7 @@ export default function BookAppointmentPage() {
                             >
                                 Continue to Questions
                             </Button>
-                        </Card>
+                        </GlassCard>
                     </div>
                 </div>
             </div>

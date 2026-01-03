@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Input } from '@/components/ui/Input';
 import api from '@/lib/api';
 import { log } from 'console';
@@ -137,7 +138,7 @@ export default function QuestionsPage() {
                         <Button onClick={handleContinue} className="bg-accent text-accent-foreground">
                             Continue
                         </Button>
-                    </Card>
+                    </GlassCard>
                 ) : (
                     <div className="space-y-6">
                         {questions.map((question, index) => (

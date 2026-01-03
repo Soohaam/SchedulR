@@ -7,6 +7,7 @@ import { RootState } from '@/lib/store';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { GlassCard } from '@/components/ui/GlassCard';
 import api from '@/lib/api';
 
