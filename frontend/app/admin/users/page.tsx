@@ -36,8 +36,16 @@ export default function AdminUsersPage() {
     limit: 10,
   });
 
+  const buildQueryFromFilters = (f: typeof filters) => ({
+    ...f,
+    isActive: f.isActive === '' ? undefined : f.isActive === 'true',
+    isVerified: f.isVerified === '' ? undefined : f.isVerified === 'true',
+  });
+
+  const refreshUsers = () => dispatch(fetchUsers(buildQueryFromFilters(filters)));
+
   useEffect(() => {
-    dispatch(fetchUsers(filters));
+    refreshUsers();
   }, [dispatch, filters]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -56,7 +64,7 @@ export default function AdminUsersPage() {
       )
     ) {
       await dispatch(toggleUserStatus({ userId, isActive: !currentStatus }));
-      dispatch(fetchUsers(filters));
+      refreshUsers();
     }
   };
 
@@ -68,7 +76,7 @@ export default function AdminUsersPage() {
 
     if (newRole && roles.includes(newRole.toUpperCase())) {
       await dispatch(changeUserRole({ userId, newRole: newRole.toUpperCase() }));
-      dispatch(fetchUsers(filters));
+      refreshUsers();
     } else if (newRole) {
       alert('Invalid role. Please use CUSTOMER, ORGANISER, or ADMIN');
     }

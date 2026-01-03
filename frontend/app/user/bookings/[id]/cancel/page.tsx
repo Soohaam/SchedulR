@@ -130,10 +130,10 @@ export default function CancelBookingPage() {
                             )}
                         </div>
                     </div>
-                </Card>
+                </GlassCard>
 
                 {/* Booking Summary */}
-                <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50 mb-6">
+                <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50 mb-6">
                     <h2 className="text-xl font-semibold text-primary mb-4">Booking Summary</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -158,10 +158,10 @@ export default function CancelBookingPage() {
                             </p>
                         </div>
                     </div>
-                </Card>
+                </GlassCard>
 
                 {/* Cancellation Reason */}
-                <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50 mb-6">
+                <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50 mb-6">
                     <label className="block mb-4">
                         <p className="text-lg font-semibold text-primary mb-2">Reason for Cancellation</p>
                         <p className="text-sm text-muted-foreground mb-3">
@@ -175,7 +175,7 @@ export default function CancelBookingPage() {
                             className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent text-foreground"
                         />
                     </label>
-                </Card>
+                </GlassCard>
 
                 {/* Action Buttons */}
                 <div className="flex gap-4">

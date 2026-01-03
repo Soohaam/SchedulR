@@ -46,7 +46,7 @@ export default function TwoFactorSettings() {
 
         {!showDisableConfirm ? (
           <Button
-            variant="danger"
+            variant="destructive"
             onClick={() => setShowDisableConfirm(true)}
             className="w-auto"
           >
@@ -66,7 +66,7 @@ export default function TwoFactorSettings() {
             />
             <div className="flex space-x-2">
               <Button
-                variant="danger"
+                variant="destructive"
                 onClick={handleDisable}
                 isLoading={isLoading}
                 disabled={code.length !== 6}

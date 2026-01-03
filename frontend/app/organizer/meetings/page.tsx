@@ -178,7 +178,6 @@ export default function MeetingsPage() {
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <GoldButton
-                                                        size="sm"
                                                         className={`h-8 px-3 bg-green-600 min-w-[88px] ${processingId === booking.id ? 'opacity-60 cursor-not-allowed' : ''}`}
                                                         onClick={() => handleAction(booking.id, 'confirm')}
                                                         disabled={processingId === booking.id}

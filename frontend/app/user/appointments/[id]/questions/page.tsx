@@ -79,13 +79,14 @@ export default function QuestionsPage() {
         }
 
         // Format answers for backend
-        const formattedAnswers = questions.map(q => ({
-            questionId: q.id,
-            questionText: q.questionText,
-            answer: Array.isArray(answers[q.id])
-                ? answers[q.id].join(', ')
-                : answers[q.id] || ''
-        }));
+        const formattedAnswers = questions.map(q => {
+            const val = answers[q.id];
+            return {
+                questionId: q.id,
+                questionText: q.questionText,
+                answer: Array.isArray(val) ? val.join(', ') : (val as string) || ''
+            };
+        });
 
         // Update booking data with answers
         const updatedBookingData = {

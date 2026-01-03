@@ -160,7 +160,7 @@ export default function BookingDetailPage() {
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Appointment Info */}
-                        <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                        <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
                             <h2 className="text-2xl font-bold text-primary mb-4">{booking.appointmentType.title}</h2>
                             {booking.appointmentType.description && (
                                 <p className="text-muted-foreground mb-4">{booking.appointmentType.description}</p>
@@ -202,10 +202,10 @@ export default function BookingDetailPage() {
                                     </div>
                                 </div>
                             </div>
-                        </Card>
+                        </GlassCard>
 
                         {/* Provider Info */}
-                        <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                        <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
                             <h3 className="text-xl font-semibold text-primary mb-4">Provider Information</h3>
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
@@ -230,11 +230,11 @@ export default function BookingDetailPage() {
                                     <p className="text-xs text-accent mt-1 capitalize">{booking.provider.type.toLowerCase()}</p>
                                 </div>
                             </div>
-                        </Card>
+                        </GlassCard>
 
                         {/* Answers */}
                         {booking.answers && booking.answers.length > 0 && (
-                            <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                            <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
                                 <h3 className="text-xl font-semibold text-primary mb-4">Your Responses</h3>
                                 <div className="space-y-3">
                                     {booking.answers.map((answer, index) => (
@@ -244,15 +244,15 @@ export default function BookingDetailPage() {
                                         </div>
                                     ))}
                                 </div>
-                            </Card>
+                            </GlassCard>
                         )}
 
                         {/* Notes */}
                         {booking.notes && (
-                            <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                            <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
                                 <h3 className="text-xl font-semibold text-primary mb-4">Notes</h3>
                                 <p className="text-muted-foreground">{booking.notes}</p>
-                            </Card>
+                            </GlassCard>
                         )}
                     </div>
 
@@ -260,7 +260,7 @@ export default function BookingDetailPage() {
                     <div className="space-y-6">
                         {/* Payment Info */}
                         {booking.payment && (
-                            <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                            <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
                                 <h3 className="text-lg font-semibold text-primary mb-4">Payment</h3>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
@@ -281,12 +281,12 @@ export default function BookingDetailPage() {
                                         </div>
                                     )}
                                 </div>
-                            </Card>
+                            </GlassCard>
                         )}
 
                         {/* Actions */}
                         {booking.canCancel && (
-                            <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                            <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
                                 <h3 className="text-lg font-semibold text-primary mb-4">Actions</h3>
                                 <div className="space-y-3">
                                     <Button
@@ -309,18 +309,18 @@ export default function BookingDetailPage() {
                                         </p>
                                     )}
                                 </div>
-                            </Card>
+                            </GlassCard>
                         )}
 
                         {/* Confirmation Message */}
                         {booking.confirmationMessage && (
-                            <Card className="p-6 bg-accent/5 border-accent/20">
+                            <GlassCard className="p-6 bg-accent/5 border-accent/20">
                                 <p className="text-sm text-primary">{booking.confirmationMessage}</p>
-                            </Card>
+                            </GlassCard>
                         )}
 
                         {/* Booking Info */}
-                        <Card className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                        <GlassCard className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
                             <h3 className="text-lg font-semibold text-primary mb-4">Booking Info</h3>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">

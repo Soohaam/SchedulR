@@ -44,7 +44,7 @@ export default function PaymentPage() {
     }, [appointmentId]);
 
     const calculateTotal = () => {
-        if (!bookingData) return 0;
+        if (!bookingData) return { subtotal: 0, tax: 0, total: 0 };
         const subtotal = bookingData.appointment.price * bookingData.capacity;
         const tax = subtotal * 0.1; // 10% tax
         return {
