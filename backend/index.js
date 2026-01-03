@@ -27,7 +27,23 @@ const port = process.env.PORT || 5000;
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(helmet());
-app.use(cors());
+
+// CORS: allow local dev and production Vercel frontend (can be extended via ALLOWED_ORIGINS env)
+// Example: ALLOWED_ORIGINS="http://localhost:3000,https://your-app.vercel.app"
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'https://odoo-appointment-booking-n5n1.vercel.app'
+]);
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('CORS policy does not allow access from this origin'));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(morgan("combined"));
 
