@@ -13,7 +13,7 @@ export const GoldButton = React.forwardRef<HTMLButtonElement, GoldButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "liquid-gold-btn",
+          "liquid-gold-btn inline-flex items-center justify-center text-sm rounded-md",
           className
         )}
         disabled={disabled || isLoading}

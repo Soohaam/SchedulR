@@ -104,7 +104,7 @@ function ResetPasswordContent() {
               New Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground">
                 <Lock className="h-5 w-5" />
               </div>
               <GoldInput
@@ -113,7 +113,7 @@ function ResetPasswordContent() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10"
+                className="pl-12"
                 placeholder="••••••••"
               />
             </div>
@@ -124,7 +124,7 @@ function ResetPasswordContent() {
               Confirm Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground">
                 <Lock className="h-5 w-5" />
               </div>
               <GoldInput
@@ -133,7 +133,7 @@ function ResetPasswordContent() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pl-10"
+                className="pl-12"
                 placeholder="••••••••"
               />
             </div>

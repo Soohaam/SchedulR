@@ -148,6 +148,28 @@ export default function OrganizerLayout({
             </button>
           </header>
 
+          {/* Desktop Top Bar (persistent) */}
+          <div className="hidden lg:flex sticky top-0 z-10 bg-card/80 backdrop-blur-sm border-b border-border">
+            <div className="w-full px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Organizer</h2>
+                <p className="text-xs text-muted-foreground">Manage your appointments and meetings</p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <ThemeToggle />
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-5 h-5" />
+                  Log out
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Page Content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-8">
             {children}

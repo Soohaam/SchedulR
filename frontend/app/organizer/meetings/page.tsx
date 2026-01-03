@@ -21,6 +21,7 @@ export default function MeetingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
+    const [processingId, setProcessingId] = useState<string | null>(null);
     const { token } = useSelector((state: RootState) => state.auth);
 
     const fetchRequests = async () => {
@@ -67,12 +68,19 @@ export default function MeetingsPage() {
                 if (msg && msg.trim().length > 0) body = { confirmationMessage: msg.trim() };
             }
 
+                setProcessingId(id);
             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organiser/bookings/${id}/${action}`, body, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
+            // Optimistic update: remove the processed booking immediately so the UI reflects the change without a manual refresh
+            setBookings((prev) => prev.filter((b) => b.id !== id));
+            setExpandedBooking((prev) => (prev === id ? null : prev));
+
             toast.success(`Booking ${action}ed successfully`);
+            // Also refetch in the background to ensure eventual consistency
             fetchRequests(); // Refresh list
+            setProcessingId(null);
         } catch (error: any) {
             // Show server-provided error message when available to help debugging
             console.error(`Failed to ${action} booking:`, error);
@@ -171,16 +179,18 @@ export default function MeetingsPage() {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <GoldButton
                                                         size="sm"
-                                                        className="h-8 px-3 bg-green-600"
+                                                        className={`h-8 px-3 bg-green-600 min-w-[88px] ${processingId === booking.id ? 'opacity-60 cursor-not-allowed' : ''}`}
                                                         onClick={() => handleAction(booking.id, 'confirm')}
+                                                        disabled={processingId === booking.id}
                                                     >
                                                         <Check className="w-4 h-4 mr-1" /> Approve
                                                     </GoldButton>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="border-red-200 text-red-600 hover:bg-red-50 h-8 px-3"
+                                                        className={`border-red-200 text-red-600 hover:bg-red-50 h-8 px-3 min-w-[88px] ${processingId === booking.id ? 'opacity-60 cursor-not-allowed' : ''}`}
                                                         onClick={() => handleAction(booking.id, 'reject')}
+                                                        disabled={processingId === booking.id}
                                                     >
                                                         <X className="w-4 h-4 mr-1" /> Decline
                                                     </Button>

@@ -18,6 +18,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { motion } from 'framer-motion';
 
 const SIDEBAR_ITEMS = [
@@ -254,6 +255,7 @@ export default function AdminLayout({
 
             {/* Right side icons */}
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <button className="p-2 hover:bg-secondary rounded-lg transition-colors relative hidden sm:block">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse"></span>

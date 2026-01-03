@@ -103,8 +103,8 @@ export default function AppointmentTypesPage() {
           <p className="text-muted-foreground mt-2 ml-1">Manage your appointment types and availability.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">Reporting</Button>
-          <Button variant="outline">Settings</Button>
+          <Button variant="outline" size="sm" className="h-8">Reporting</Button>
+          <Button variant="outline" size="sm" className="h-8">Settings</Button>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function AppointmentTypesPage() {
             <Calendar className="w-24 h-24 text-accent/30 mx-auto mb-6 relative z-10" />
             <p className="text-muted-foreground mb-6 text-lg font-medium relative z-10">You haven't created any appointment types yet.</p>
             <Link href="/organizer/appointments/create">
-              <Button className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/90 hover:via-accent/80 hover:to-accent/70 text-accent-foreground shadow-xl shadow-accent/30 hover:shadow-2xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 relative z-10 text-base px-6 py-6">
+              <Button className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/90 hover:via-accent/80 hover:to-accent/70 text-accent-foreground shadow-xl shadow-accent/30 hover:shadow-2xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 relative z-10 text-lg px-6 py-3">
                 <Plus className="w-5 h-5 mr-2" />
                 Create Your First Appointment
               </Button>
