@@ -310,7 +310,7 @@ export default function AdminDashboardPage() {
               </tbody>
             </table>
           </div>
-        </Card>
+        </GlassCard>
       </section>
     </div>
   );

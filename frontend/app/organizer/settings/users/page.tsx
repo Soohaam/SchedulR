@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Plus, Search, Trash2, Loader2, Mail } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
