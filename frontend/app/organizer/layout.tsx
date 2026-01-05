@@ -74,7 +74,7 @@ export default function OrganizerLayout({
                     className="object-contain"
                   />
                 </div>
-                <span className="font-bold text-xl text-primary font-['Georgia']">Schedulr</span>
+                <span className="font-bold text-xl text-primary font-['Georgia']">SchedulR</span>
               </div>
               <button
                 className="ml-auto lg:hidden text-muted-foreground"
@@ -138,7 +138,7 @@ export default function OrganizerLayout({
                   className="object-contain"
                 />
               </div>
-              <span className="font-bold text-xl text-primary font-['Georgia']">Schedulr</span>
+              <span className="font-bold text-xl text-primary font-['Georgia']">SchedulR</span>
             </div>
             <button
               className="text-muted-foreground"

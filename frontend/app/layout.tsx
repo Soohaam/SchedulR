@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Schedulr",
+  title: "SchedulR",
   description: "Booking Simplified. Schedule Smarter.",
 };
 

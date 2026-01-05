@@ -56,7 +56,7 @@ export default function Home() {
       <header className="w-full py-6 px-6 md:px-12 flex justify-between items-center max-w-7xl mx-auto z-50 relative">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold text-xl shadow-lg shadow-primary/20">S</div>
-          <h1 className="text-2xl font-bold text-primary tracking-tight font-['Georgia']">Schedulr</h1>
+          <h1 className="text-2xl font-bold text-primary tracking-tight font-['Georgia']">SchedulR</h1>
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
@@ -270,7 +270,7 @@ export default function Home() {
 
       <footer className="py-8 text-center text-muted-foreground text-sm border-t border-border/40 bg-secondary/20">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© 2025 Schedulr. All rights reserved.</p>
+          <p>© 2025 SchedulR. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="#" className="hover:text-accent transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-accent transition-colors">Terms</Link>
