@@ -1,115 +1,91 @@
-# Odoo Appointment Booking
+# SchedulR
 
->A full-stack appointment booking system with admin panel, organizer/staff management, customer bookings, and secure cancellation/refund flows.
+> **Booking Simplified. Schedule Smarter.**
 
-## Overview
+SchedulR is a comprehensive, multi-role appointment booking and management platform designed to streamline scheduling for businesses, staff, and customers. From complex staff availability to automated refund policies, SchedulR handles the end-to-end booking lifecycle with precision.
 
-This repository contains a two-part application:
+---
 
-- `backend/` - Node.js + Express API server (PostgreSQL via Prisma / pg), authentication, booking logic, email notifications, and file uploads (Cloudinary).
-- `frontend/` - Next.js (App Router) front-end with an admin interface, organizer dashboards, and customer booking pages. Styled with Tailwind CSS and using Redux Toolkit for state management.
+## 📽️ Project Overview
 
-The project is designed to manage appointment types, staff, resources, and bookings. It includes:
+Check out the project in action:
+[YouTube Video Link](https://youtu.be/m92FbcjDhIg?si=DQo9t8ao4W4AKLuU)
 
-- Admin panel with user & appointment management
-- Organizer and staff flows to manage availability
-- Customer booking flow with customizable questions per appointment
-- Payment and refund handling (with safe cancellation policies)
+---
 
-## Key Features
+## 👥 User Roles & Permissions
 
-- Multi-role authentication: Admin, Organizer, Staff, Customer
-- Admin dashboard with statistics and navigation
-- Appointment types with custom questions (short/long text, multiple choice, dropdown, yes/no, date, number)
-- Booking lifecycle: create, cancel (with refund calculation), reschedule
-- Email notifications and password reset flow
-- Image uploads via Cloudinary
-- PostgreSQL database with Prisma and raw queries where needed
+SchedulR is built with a robust role-based access control (RBAC) system to cater to different organizational needs:
 
-## Tech Stack
+### 🛡️ Admin
+The system overseer with full control over the platform.
+- **User Management:** Monitor, activate/deactivate accounts, and manage user roles.
+- **Global Overview:** Access system-wide statistics and dashboard analytics.
+- **Appointment Oversight:** View and manage every appointment across the system.
 
-- Backend: Node.js, Express, PostgreSQL (pg), Prisma
-- Frontend: Next.js (App Router), React, TypeScript, Tailwind CSS
-- State: Redux Toolkit
-- Other: Framer Motion, Lucide icons, Axios, Nodemailer
+### 🏢 Organiser
+The business owner or department head who manages the operational side of bookings.
+- **Booking Management:** Confirm, reject, or complete bookings manually.
+- **Dynamic Scheduling:** Reschedule or cancel appointments with automated logic.
+- **Calendar View:** A dedicated visual interface to track all scheduled slots.
+- **Resource Management:** Manage the resources (rooms, equipment, etc.) linked to appointments.
 
-## Quickstart (Development)
+### 🧑‍💼 Staff
+The service providers who carry out the appointments.
+- **Availability Management:** Define precise working hours and manage personal schedules.
+- **Exception Handling:** Set specific dates or times as "unavailable" (e.g., vacations or breaks).
+- **Personal Dashboard:** View upcoming tasks and daily schedules.
 
-Make sure you have Node.js (>= 18), npm/yarn, and PostgreSQL installed.
+### 👤 Customer
+The end-user seeking to book services.
+- **Seamless Booking:** Browse appointment types and book slots in a few clicks.
+- **Self-Service:** Manage personal bookings, including cancellation and rescheduling.
+- **Payment Integration:** Secure payment confirmation and automated refund handling for cancellations.
+- **Custom Questionnaires:** Simple response handling for appointment-specific requirements.
 
-1. Clone the repo
+---
 
-```powershell
-git clone https://github.com/sujal690/Odoo_Appointment_Booking.git
-cd Odoo_Appointment_Booking
-```
+## ✨ Key Features
 
-2. Backend setup
+- **Lifecycle Automation:** Automated flows for booking creation, confirmation, and completion.
+- **Smart Cancellations:** Built-in refund calculation logic based on time-to-appointment.
+- **Custom Appointment Types:** Create various appointment styles with tailored questions (Multiple choice, Dropdowns, Date, etc.).
+- **Real-time Notifications:** Email alerts for booking confirmations and password resets.
+- **Responsive Design:** A modern, mobile-friendly interface for both management and booking.
 
-```powershell
-cd backend
-npm install
-# Create a .env file with the variables listed below
-npm run dev
-```
+---
 
-3. Frontend setup
+## 🛠️ Tech Stack
 
-```powershell
-cd frontend
-npm install
-# Create a .env.local file (see below)
-npm run dev
-```
+- **Frontend:** Next.js (App Router), React, TypeScript, Redux Toolkit, Tailwind CSS
+- **Backend:** Node.js, Express, Prisma (ORM)
+- **Database:** PostgreSQL
+- **Utilities:** Framer Motion (Animations), Nodemailer (Emails), Cloudinary (Image Storage)
 
-Open the frontend at http://localhost:3000 and the backend at http://localhost:5000 (defaults used in this project).
+---
 
-## Environment Variables
+## 🚀 Quickstart (Development)
 
-Create a `backend/.env` file and set at minimum:
+### Prerequisites
+- Node.js (>= 18)
+- PostgreSQL
+- npm or yarn
 
-```
-DATABASE_URL=postgresql://user:password@localhost:5432/yourdb
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:3000
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
-# Optional SMTP settings for real emails
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=you@example.com
-SMTP_PASS=yourpassword
-SMTP_FROM="Odoo Appointment" <noreply@example.com>
-```
+### 1. Setup Backend
+1. Navigate to `backend/`.
+2. Install dependencies: `npm install`.
+3. Create a `.env` file (refer to `.env.example`).
+4. Run migrations: `npm run migrate`.
+5. Start server: `npm run dev`.
 
-Create a `frontend/.env.local` file with:
+### 2. Setup Frontend
+1. Navigate to `frontend/`.
+2. Install dependencies: `npm install`.
+3. Create a `.env.local` file with `NEXT_PUBLIC_API_URL=http://localhost:5000`.
+4. Start application: `npm run dev`.
 
-```
-NEXT_PUBLIC_API_URL=http://localhost:5000
-```
+---
 
-## Database & Migrations
+## 📜 License
 
-This project uses Prisma for schema and migrations. To run migrations (or the provided migration script):
-
-```powershell
-cd backend
-npm run migrate
-```
-
-Check `backend/prisma` and `backend/db/migrations` for migration files.
-
-
-YouTube video link
-
-https://youtu.be/m92FbcjDhIg?si=DQo9t8ao4W4AKLuU
-
-## Contributing
-
-Contributions are welcome. Please open an issue for discussion and submit PRs against the `main` branch. Follow the existing code style (ESLint/Prettier not enforced in repo) and include tests where appropriate.
-
-## License
-
-This project is provided as-is for educational/demo purposes.
+This project is provided for educational and demonstration purposes.
