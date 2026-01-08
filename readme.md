@@ -13,6 +13,22 @@ Check out the project in action:
 
 ---
 
+## 🖼️ Project Preview
+
+### 🏠 Landing Page
+![Landing Page](frontend/public/landing.png)
+The landing page serves as the professional entry point for SchedulR, highlighting its core scheduling capabilities.
+
+### 📝 Registration
+![Registration Page](frontend/public/register.png)
+Users can register as either a Customer or an Organizer to access tailored dashboard features.
+
+### 🔑 Login & Role Redirection
+![Login Page](frontend/public/login.png)
+The secure login system automatically detects user roles and redirects them to their respective dashboards.
+
+---
+
 ## 👥 User Roles & Permissions
 
 SchedulR is built with a robust role-based access control (RBAC) system to cater to different organizational needs:
