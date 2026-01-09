@@ -27,6 +27,14 @@ Users can register as either a Customer or an Organizer to access tailored dashb
 ![Login Page](frontend/public/login.png)
 The secure login system automatically detects user roles and redirects them to their respective dashboards.
 
+### 👤 Customer Dashboard
+![Customer Dashboard](<frontend/public/customer dashboard.png>)
+The customer dashboard provides a streamlined overview of upcoming appointments and easy access to booking history.
+
+### 📅 Booking Management
+![Customer Dash 2](<frontend/public/customer dash2.png>)
+Customers can manage their personal schedules, reschedule slots, and track the status of their service requests.
+
 ---
 
 ## 👥 User Roles & Permissions
