@@ -35,6 +35,22 @@ The customer dashboard provides a streamlined overview of upcoming appointments 
 ![Customer Dash 2](<frontend/public/customer dash2.png>)
 Customers can manage their personal schedules, reschedule slots, and track the status of their service requests.
 
+### 🔍 Available Services
+![Available Services](<frontend/public/available services.png>)
+Users can browse the full catalog of available appointments and services offered by the platform.
+
+### 🖱️ Select Service
+![Select Service](<frontend/public/select service.png>)
+The intuitive interface allows users to select their desired service to proceed with the booking process.
+
+### 📅 Date & Time Selection
+![Date and Time](<frontend/public/data and time.png>)
+A dynamic calendar and time-slot picker allow users to choose their preferred appointment time.
+
+### 🛡️ Confirm Booking
+![Confirm Booking](frontend/public/confirm.png)
+The final step ensures all details are correct before securely confirming the appointment.
+
 ---
 
 ## 👥 User Roles & Permissions
